@@ -6,7 +6,7 @@
 
 Actions that will run when corresponding regular expressions match are ordinary Haskell functions under any monad such as `IO`, and are given as an argument the matched string by the corresponding regular expressions.
 
-## Why to analyze in real-time separately?
+## Why to separately analyze in real-time?
 
 The legacy `lex` matches its patterns in such a way that:
 - it tries to match patterns from top to bottom (or concurrently if it is "smart" enough),
@@ -21,7 +21,7 @@ hello      { printf("2nd action\n"); }
 ```
 and if we give it the input, `"helloworld"`, it will not execute any action until it completes to read in the whole input string. That is, even after it reads `"hello"` it does not execute the second action immediately, because at that moment it does not know whether the first pattern will match with further input characters or not. After reading the whole input string, it will execute (only) the first action. What if we give it the input, `"helloworks"`? This time, the second action will be executed, but only when it reads the character `'k'`.
 
-Also note that most `lex`s (including the `flex`) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (If they want to be "smart", they need to put an action into the regular expression ADT (algebraic data type) and then combine all regular expressions from patterns into one.) That means, depending on accompanied patterns, the action corresponding to a matched pattern may not be executed immediately.
+Also note that most `lex`s (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (If they want to be "smart", they need to put an action into the regular expression ADT (algebraic data type) and then combine all regular expressions from patterns into one.) That means, depending on accompanied patterns, the action corresponding to a matched pattern may not be executed immediately.
 
 So, to facilitate the analysis of real-time streams, rtlex features:
 - immediate matching of patterns, rather than lazy matching to find out any possible longer match, and
