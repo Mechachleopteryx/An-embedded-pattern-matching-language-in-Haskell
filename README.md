@@ -29,7 +29,7 @@ So, to facilitate the analysis of real-time streams, rtlex features:
 
 ## An example
 
-Here is a simple program that detects "sheer", "she", "he", and "he\*r" when given the input string, "sheerEnd".
+Here is a simple code that detects "sheer", "she", "he", and "he\*r" when given the input string, "sheerEnd".
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
 
@@ -55,4 +55,52 @@ main =
                 putStrLn s
             yyReject
         ]
+```
+It can match "she" and "he" while matching "sheer".
+```
+*Main> main
+she
+he
+sheer
+0
+```
+
+## Another example
+
+By having `StateT (Map String Int) IO` instead of the `IO` monad, we can count occurrences of words with the State monad.
+```haskell
+{-# LANGUAGE QuasiQuotes #-}
+
+import Parser
+import Rtlex
+import Control.Monad.State
+import qualified Data.Map as Map
+
+main :: IO ()
+main = do  -- in the IO monad
+    m <- flip execStateT Map.empty $
+        -- execStateT returns the final state and discards the final value, which is () 
+        -- as returned from stream ().
+
+        stream () "ha ha ho hoo hi ha"
+
+        $$ yyLex (\s -> do  -- in the "StateT (Map String Int) IO" monad
+            modify $ Map.insertWith (+) s 1  -- stores occurrences of each word in a Map
+            lift $ putStrLn s)               -- and prints each word as well.
+
+        $$ rules [
+            rule [regex|ha|ho|hi|] $ \s -> yyAccept s  -- reports each word to the yyLex.
+            ]
+
+    print $ Map.toList m  -- finally prints the counts in the Map.
+```
+```
+*Main> main
+ha
+ha
+ho
+ho
+hi
+ha
+[("ha",3),("hi",1),("ho",2)]
 ```
