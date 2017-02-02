@@ -143,24 +143,24 @@ analyzer =
 - `rules` introduces rules in a list. As such, each rule in the list must be separated with a comma, "`,`".
 
 - `rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string up to the current character from the stream, the corresponding actions is called with the whole matched string. (More details about the matching algorithm are explained below.) Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
-```haskell
-data ActionResult r a
-    = Return r  -- to finish the lexical analyzer immediately with value "r"
-    | Accept a  -- to accept the current match and report value "a" to lexical analyzer
-    | Reject    -- to reject the current match and try other actions
-```
+    ```haskell
+    data ActionResult r a
+        = Return r  -- to finish the lexical analyzer immediately with value "r"
+        | Accept a  -- to accept the current match and report value "a" to lexical analyzer
+        | Reject    -- to reject the current match and try other actions
+    ```
 
 - As you see, there are two user-determined types involved, `r` and `a` that are already introduced above. `a` is for reportng a value to `yyLex` and thus `yacc`, and `r` is for stopping and exiting the `analyzer` on the fly with the return value of `r`. So, before reaching the end of stream, we can early exit from `analyzer` using the `yyReturn`. Also note that the `action` functions and `yacc` function run under the same shared monad `m`, which means they can interact with each other through the monad. To make it convenient to use those constructors under the monad, three short-cuts are provided as follows.
-```haskell
-yyReturn :: Monad m => r -> m (ActionResult r a)
-yyReturn = return . Return
+    ```haskell
+    yyReturn :: Monad m => r -> m (ActionResult r a)
+    yyReturn = return . Return
 
-yyAccept :: Monad m => a -> m (ActionResult r a)
-yyAccept = return . Accept
+    yyAccept :: Monad m => a -> m (ActionResult r a)
+    yyAccept = return . Accept
 
-yyReject :: Monad m => m (ActionResult r a)
-yyReject = return Reject
-```
+    yyReject :: Monad m => m (ActionResult r a)
+    yyReject = return Reject
+    ```
 
 ## Matching rules
 
