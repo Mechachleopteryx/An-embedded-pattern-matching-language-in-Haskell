@@ -9,9 +9,9 @@ Actions that will run when corresponding regular expressions are matched with an
 ## Why to analyze in real-time?
 
 The legacy `lex` matches its patterns in such a way that:
-- it tries to match patterns from top to bottom (or concurrently if it is "smart" enough),
-- if it finds a pattern matches a string that it has read so far from input, it memorizes the matched pattern and the position of input as well, and then it repeatedly tries further patterns (including the currently matched pattern as well) for any possible longer match, and
-- if there are no more patterns that successfully match at some character being read from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for the input.
+- it tries to match patterns from top to bottom and one by one (or concurrently if it is "smart" enough),
+- if it finds a pattern matches a string that it has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries further patterns (including the currently matched pattern as well) for any possible longer matches, and
+- if there are no more patterns that successfully match as characters are read from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for the input.
 
 For example, if the legacy `lex` has the following two rules,
 ```
@@ -19,12 +19,12 @@ For example, if the legacy `lex` has the following two rules,
 helloworld { printf("1st action\n"); }
 hello      { printf("2nd action\n"); }
 ```
-and if we give it the input, `"helloworld"`, it will not execute any action until it completes to read in the whole input string. That is, even after it reads `"hello"` it does not execute the second action immediately, because at that moment it does not know whether the first pattern will match with further input characters or not. After reading the whole input string, it will execute (only) the first action. What if we give it the input, `"helloworks"`? This time, the second action will be executed, but only when it reads the character `'k'`.
+and if we give it the input, `"helloworld"`, it will not execute any action until it completes to read the whole input string, and then it executes only the first action. That is, even after it reads `"hello"` in the middle of the input string it does not execute the second action immediately, because at that moment it does not know whether the first pattern will match with further input characters or not. It does not execute the second action in preference for a longer match. What if we give it the input, `"helloworks"`? This time, the second action will be executed as expected, but will be executed only when it reads the character `'k'` which is the first clue of no possibility of matching with the first pattern. That means, depending on accompanied patterns, the action corresponding to a matched pattern may not be executed immediately.
 
-Also note that most `lex`s (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (If they want to be "smart", they need to put an action into the regular expression ADT (algebraic data type) and then combine all regular expressions from patterns into one.) That means, depending on accompanied patterns, the action corresponding to a matched pattern may not be executed immediately.
+Note that most lexers (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (In fact, if they want to be "smart", they need to include actions in the regular expressions (regular expression ASTs, to be accurate) and then combine all the regular expressions across rules into a single regular expression, before starting to match them with input.)
 
 So, to facilitate the analysis of real-time streams, rtlex features:
-> - immediate matching of patterns, rather than lazy matching to find out any possible longer match, and
+> - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
 > - concurrent matching of all patterns, rather than trying patterns one by one. (By concurrent, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and another pattern is tried.)
 
 ## An example
