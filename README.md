@@ -1,4 +1,4 @@
-# A real-time pattern matching algorithm in Haskell over network stream
+## A real-time pattern matching algorithm in Haskell over network stream
 
 **Rtlex** (Real-time Lexical Analyzer) is a scanner over network stream (or any kind of real-time streams) that executes a monadic action whenever a pattern matches some text in the stream. It is intended to work on real-time streams, and so it is based on space- and time- efficient algorithm that does not backtrack while trying to match multiple patterns and as such, does not rely on the stream being recoverable by using something like `unget()`.
 
@@ -25,23 +25,34 @@ Note that most lexers (including the [`flex`](https://en.wikipedia.org/wiki/Flex
 
 So, to facilitate the analysis of real-time streams, rtlex features:
 > - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
-> - concurrent matching of all patterns, rather than trying patterns one by one. (By concurrent, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and another pattern is tried.)
+> - concurrent matching of all patterns, rather than trying patterns one by one. (By concurrent, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and then another pattern is tried.)
 
 ## An example
 
+Here is a simple program that detects "sheer", "she", "he", and "he\*r" when given the input string, "sheerEnd".
 ```haskell
+{-# LANGUAGE QuasiQuotes #-}
+
+import Parser
+import Rtlex
+import Control.Monad (when)
+
 main :: IO Int
 main =
-    stream (-1) "sheerEnd"  -- return -1 on out of stream
-    $$ yyLex (const $ return ())  -- do nothing with the reported "()"s from rules
+    stream (-1) "sheerEnd"  -- main returns (-1) if stream runs out.
+
+    $$ yyLex (const $ return ())
+        -- A simple analyzer here does nothing with the resulting reports from actions 
+        -- that are executed when corresponding patterns match some input.
+
     $$ rules [
-        rule [regex|End|]  $ \s -> yyReturn 0,
-        rule [regex|he|]   $ \s -> do putStrLn s; yyReject,
-        rule [regex|she|]  $ \s -> do putStrLn s; yyAccept (),
-        rule [regex|he*r|] $ \s ->
-            if s == "her" then do
-                putStrLn s; yyAccept ()
-            else
-                yyReject
-    ]
+        rule [regex|End|]   $ \s -> yyReturn 0,  -- main returns 0 if "End" is reached.
+        rule [regex|sheer|] $ \s -> do putStrLn s; yyReject,
+        rule [regex|she|]   $ \s -> do putStrLn s; yyReject,
+        rule [regex|he|]    $ \s -> do putStrLn s; yyReject,
+        rule [regex|he*r|]  $ \s -> do
+            when ( s == "her" ) $
+                putStrLn s
+            yyReject
+        ]
 ```
