@@ -162,6 +162,14 @@ analyzer =
     yyReject = return Reject
     ```
 
-## Matching rules
+## Details about matching rules
 
 Patterns are always matched whether or not ...
+
+## Regular expression syntax
+
+Haha
+
+## More interesting applications
+
+Hoho
