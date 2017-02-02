@@ -104,3 +104,26 @@ hi
 ha
 [("ha",3),("hi",1),("ho",2)]
 ```
+
+## Template
+
+Our lexical analyzer has the following general form.
+```haskell
+{-# LANGUAGE QuasiQuotes #-}
+
+import Parser
+import Rtlex
+
+analyzer :: m r
+analyzer =
+    stream r0 "string"             -- r0 :: r
+
+    $$ yyLex collector             -- collector :: a -> m b
+
+    $$ rules [
+        rule [regex|re1|] action1  -- action :: String -> m (ActionResult r a)
+        rule [regex|re2|] action2
+        ...
+        rule [regex|reN|] actionN
+        ]
+```
