@@ -1,12 +1,12 @@
 # A real-time pattern matching algorithm in Haskell over network stream
 
-**Rtlex** (Real-time Lexical Analyzer) is a scanner over network stream (or any kind of real-time streams) that executes a monadic action whenever a pattern matches a text in the stream. It is intended to work on real-time streams, and so it is based on space- and time- efficient algorithm that does not backtrack while choosing patterns and as such, does not rely on the stream being recoverable using something like `unget()`.
+**Rtlex** (Real-time Lexical Analyzer) is a scanner over network stream (or any kind of real-time streams) that executes a monadic action whenever a pattern matches some text in the stream. It is intended to work on real-time streams, and so it is based on space- and time- efficient algorithm that does not backtrack while trying multiple patterns and as such, does not rely on the stream being recoverable using something like `unget()`.
 
-**Rtlex** takes (self- and mutual- as well) recursive regular expressions for patterns to match, which are easier to write and better to fit in a lexical analyzer than context-free grammar. The regular expression is extended to be able to embed an arbitrary (in-line) Haskell function as a zero-width assertion as well as an on-the-fly converter of (partially) matched strings. Regular expressions in **rtlex** are specified with a quasi quote and thus compiled at compile-time.
+Rtlex uses (self- and mutual- as well) recursive regular expressions for specifying patterns to match, which are easier to write and better to fit in a lexical analyzer than *context-free grammar*. Rtlex takes an extended regular expression into which we can embed Haskell variables to refer to other regular expressions, and arbitrary (in-line) Haskell functions to be used as zero-width assertions such as look-behinds. Zero-width assertions are further extended and can also be used to convert a partially matched substring so far into another string, in the middle of a regular expression while matching is going on. Regular expressions in rtlex are specified in a *quasi quote* and thus compiled at compile-time.
 
-Actions that will run when corresponding regular expressions match are ordinary Haskell functions under any monad such as `IO`, and are given as an argument the matched string by the corresponding regular expressions.
+Actions that will run when corresponding regular expressions are matched with an input string are ordinary Haskell functions under some user-specified monad such as `IO`. As the actions share the same monad, they can communicate with each other through some simple mutable references like `IORef` or through a transformed monad like, for example, `StateT u IO` for some user state type `u`. Actions are also given as an argument the whole matched string by the corresponding regular expressions.
 
-## Why to separately analyze in real-time?
+## Why to analyze in real-time?
 
 The legacy `lex` matches its patterns in such a way that:
 - it tries to match patterns from top to bottom (or concurrently if it is "smart" enough),
@@ -24,8 +24,8 @@ and if we give it the input, `"helloworld"`, it will not execute any action unti
 Also note that most `lex`s (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (If they want to be "smart", they need to put an action into the regular expression ADT (algebraic data type) and then combine all regular expressions from patterns into one.) That means, depending on accompanied patterns, the action corresponding to a matched pattern may not be executed immediately.
 
 So, to facilitate the analysis of real-time streams, rtlex features:
-- immediate matching of patterns, rather than lazy matching to find out any possible longer match, and
-- concurrent matching of all patterns, rather than trying patterns one by one. (By concurrent, I do not mean that every pattern is run through a separate thread, but that patterns are arranged interleaved so that there is no backtracking when a pattern matching fails.)
+> - immediate matching of patterns, rather than lazy matching to find out any possible longer match, and
+> - concurrent matching of all patterns, rather than trying patterns one by one. (By concurrent, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and another pattern is tried.)
 
 ## An example
 
