@@ -217,7 +217,32 @@ ParseTerm    = <a character>
     -- island
     ```
 
-- `"&"` (*and*): `[regex|α&β|]` matches a string that is matched with both α and β *at the same time*. So, `[regex|`[regex|foo.\*&.\*bar|]` matches a string from input that starts with "foo" and ends with "bar".
+- `"&"` (*and*): `[regex|α&β|]` matches a string that is matched with both α and β *at the same time*. So, `[regex|foo.\*&.\*bar|]` matches a string from input that starts with "foo" and ends with "bar".
+
+    Among words separated by spaces, if we want to choose the words that contain a number, we can use:
+    ```haskell
+    main :: IO ()
+    main =
+        stream () " abc de fgh1 ijk 23lm "
+        $$ yyLex (const $ return ())
+        $$ rules [
+            rule [regex|.*[0123456789].*& [^ ]+ |] $ \s -> do putStrLn s; yyAccept ()
+            ]
+    -- Output will be:
+    -- *Main> main
+    -- fgh1 
+    -- 23lm 
+    ```
+
+- (*Operator precedence*): all operators are listed from the highest precedence to the lowest as:
+    ```
+    ?, *, +                             (postfix, same precedence)
+    sequencing (juxtaposition)          (binary, left-associative)
+    &                                   (binary, left-associative)
+    |                                   (binary, left-associative)
+    ```
+
+- `"."`: `"."` matches any single character (including whitespaces and control characters such as a new-line). So, `[regex|a.*b|]` matches strings of any length between "a" and "b" including "a" and "b". (However, be careful in using `".*"` in a pattern, because as a real-time analyzer, rtlex matches "." with any character includig a new-line, and `".*"` will match the whole input stream if not accompanied by proper boundary expressions.)
 
 ## More interesting applications
 
