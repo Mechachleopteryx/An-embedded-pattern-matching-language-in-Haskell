@@ -1,10 +1,10 @@
 # A real-time pattern matching algorithm in Haskell over network stream
 
-**Rtlex** (Real-time Lexical Analyzer) is a scanner over network stream (or any kind of real-time streams) that executes a monadic action whenever a pattern matches some text in the stream. It is intended to work on real-time streams, and so it is based on space- and time- efficient algorithm that does not backtrack while trying to match multiple patterns and as such, does not rely on the stream being recoverable by using something like `unget()`.
+**Rtlex** (Real-time [Lexical Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a scanner over network stream (or any kind of real-time streams) that executes a monadic action whenever a pattern matches some text in the stream. It is intended to work on real-time streams, and so it is based on space- and time- efficient algorithm that does not backtrack while trying to match multiple patterns and as such, does not rely on the stream being recoverable by using something like [`unget()`](http://www.cplusplus.com/reference/istream/istream/unget/).
 
-Rtlex uses (self- and mutual- as well) recursive regular expressions for specifying patterns to match, which are easier to write and better to fit in a lexical analyzer than the [*context-free grammar*](https://en.wikipedia.org/wiki/Context-free_grammar). Rtlex takes extended regular expressions into which we can embed Haskell variables to refer to other regular expressions, and we can also embed arbitrary (in-line) Haskell functions to be used as zero-width assertions such as look-behinds. Zero-width assertions are further extended and can also be used to convert a partially matched substring so far into another string, in the middle of a regular expression while matching is going on. Regular expressions in rtlex are specified in a *quasi quote* and thus compiled at compile-time.
+Rtlex uses (self- and mutual- as well) [recursive regular expressions](http://www.regular-expressions.info/recurse.html) for specifying patterns to match, which are easier to write and better to fit in a lexical analyzer than the [*context-free grammar*](https://en.wikipedia.org/wiki/Context-free_grammar). Rtlex takes extended regular expressions into which we can embed Haskell variables and arbitrary (in-line) Haskell functions. Embedded variables can refer to other regular expressions including the regular expression containing them, and embedded Haskell functions can be used as [zero-width assertions](http://www.regular-expressions.info/lookaround.html) such as lookbehinds. Zero-width assertions are further extended and can also be used to convert a partially matched substring so far into another string, in the middle of a regular expression while is currently being matched. Regular expressions in rtlex are specified in a [*quasi quote*](https://wiki.haskell.org/Quasiquotation) and thus compiled at compile-time.
 
-Actions that will run when corresponding regular expressions are matched with an input string are ordinary Haskell functions under some user-specified monad such as `IO`. As the actions share the same monad, they can communicate with each other through the monad; for example, we can use some simple mutable references like `IORef` or we can use a transformed monad like `StateT u IO` for some user state type `u`. Actions are also given as an argument the whole matched string by the corresponding regular expressions.
+Actions that will run when corresponding regular expressions are matched with an input string are ordinary Haskell functions under some user-specified monad such as `IO`. As the actions share the same monad, they can communicate with each other through the monad; for example, we can use some simple mutable references like [`IORef`](https://hackage.haskell.org/package/base-4.9.1.0/docs/Data-IORef.html) or we can use a transformed monad like [`StateT u IO`](https://hackage.haskell.org/package/transformers-0.5.2.0/docs/Control-Monad-Trans-State-Lazy.html) for some user state type `u`. Actions are also given as an argument the whole matched string by the corresponding regular expressions.
 
 ## Why to analyze in real-time?
 
@@ -19,9 +19,9 @@ For example, if the legacy `lex` has the following two rules,
 helloworld { printf("1st action\n"); }
 hello      { printf("2nd action\n"); }
 ```
-and if we give it the input, `"helloworld"`, it will not execute any action until it completes to read the whole input string, and then it executes only the first action. That is, even after it reads `"hello"` in the middle of the input string it does not execute the second action immediately, because at that moment it does not know whether the first pattern will match with further input characters or not. It does not execute the second action in preference for a longer match. What if we give it the input, `"helloworks"`? This time, the second action will be executed as expected, but will be executed only when it reads the character `'k'` which is the first clue of no possibility of matching with the first pattern. That means, depending on accompanied patterns, the action corresponding to a matched pattern may not be executed immediately.
+and if we give it the input, `"helloworld"`, it will not execute any action until it completes to read the whole input string, and then it executes only the first action. That is, even after it reads `"hello"` in the middle of the input string it does not execute the second action immediately, because at that moment it does not know whether the first pattern will match with further input characters or not. It does not execute the second action in preference for a longer match. What if we give it the input, `"helloworks"`? This time, the second action will be executed as expected, but will be executed only when it reads the character `'k'` which is the first clue of no success of matching with the first pattern. That means, depending on other patterns, the action corresponding to a matched pattern may not be executed immediately.
 
-Note that most lexers (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (In fact, if they want to be "smart", they need to include actions in the regular expressions (regular expression ASTs, to be accurate) and then combine all the regular expressions across rules into a single regular expression, before starting to match them with input.)
+Note that most lexers (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (In fact, if they want to be "smart", they need to include actions into the regular expressions (regular expression ASTs, to be accurate) and then combine all the regular expressions across rules into a single regular expression, before starting to match them with input.)
 
 So, to facilitate the analysis of real-time streams, rtlex features:
 > - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
@@ -105,9 +105,9 @@ ha
 [("ha",3),("hi",1),("ho",2)]
 ```
 
-## General form
+## About general form
 
-Our lexical analyzer has the following general form.
+Rtlex has the following general form.
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
 
@@ -134,15 +134,15 @@ analyzer =
 
 - `import Rtlex` imports: `stream`, `yyLex`, `rules`, `($$)`, `rule`, `yyReturn`, `yyAccept`, and `yyReject`.
 
-- The `analyzer` consists of three sections, `stream`, `yyLex`, and `rules`, separated by `$$` operator. Each section is actually implemented as a coroutine that interacts with each other using yield (and resume), and the `$$` operator plays the role of binding those coroutines. The middle coroutine `yyLex` acts as a proxy between the upper and the lower coroutines, and reads each input character from the stream and passes it to `rules`. The `rules` tries to match each rule in its rules list with the given character, runs actions that correspond to successfully matched patterns, and reports the results from such actions to `yyLex` one by one. Then with each result from `rules`, `yyLex` calls the `yacc` that is given as its argument. Then, `yyLex` repeats the next cycle by reading another character and so on.
+- The `analyzer` consists of three sections, `stream`, `yyLex`, and `rules`, separated by `$$` operator. Each section is actually implemented as a [coroutine](https://en.wikipedia.org/wiki/Coroutine) that interacts with each other using yield (and resume), and the `$$` operator plays the role of binding those coroutines. The middle coroutine `yyLex` acts as a proxy between the upper and the lower coroutines, and reads each input character from the stream and passes it to `rules`. The `rules` tries to match each rule in its rules list with the given character, runs actions that correspond to successfully matched patterns, and reports the results from such actions to `yyLex` one by one. Then with each result from `rules`, `yyLex` calls `yacc` that is given as its argument, before `yyLex` repeats the next cycle by reading another character and so on.
 
 - `stream` introduces an input stream and takes two arguments, `r0` and a string. `r0` can be any user-determined value of type `r`, and will be returned as a result from `analyzer` when the end of stream is reached. String is a list of characters to be served as the stream. Instead of a string, a bytestring or anything from an instance of `Stream` class can be used (will be implemented later).
 
-- `yyLex` takes a user-defined function called `yacc`, which has type of `a -> m b`. `yacc` is a monadic function, taking an `a` that results from actions when their corresponding patterns are matched, and returning `b` under the user-determined monad `m`. The monad `m` will be usually the `IO` monad or some of its transformed monads, but any monad will be ok. The monad result `b` is currently not used and can be anything, but is reserved for a future extension and may be possibly used to communicate with the stream to control the stream.
+- `yyLex` takes a user-defined function called `yacc`, which has type of `a -> m b`. `yacc` is a monadic function, taking an `a` that results from actions when their corresponding patterns are matched, and returning `b` under the user-determined monad `m`. The monad `m` will be usually the `IO` monad or some transformed monad of `IO`, but any monad will be ok. The monad result `b` is currently not used and can be anything, but is reserved for a future extension and may be possibly used to communicate with the stream to control it.
 
 - `rules` introduces rules in a list. As such, each rule in the list must be separated with a comma, "`,`".
 
-- `rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string up to the current character from the stream, the corresponding actions is called with the whole matched string. (More details about the matching algorithm are explained below.) Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
+- `rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. (More details about the matching algorithm are explained below.) Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
     ```haskell
     data ActionResult r a
         = Return r  -- to finish the lexical analyzer immediately with value "r"
@@ -150,7 +150,7 @@ analyzer =
         | Reject    -- to reject the current match and try other actions
     ```
 
-- As you see, there are two user-determined types involved, `r` and `a` that are already introduced above. `a` is for reportng a value to `yyLex` and thus `yacc`, and `r` is for stopping and exiting the `analyzer` on the fly with the return value of `r`. So, before reaching the end of stream, we can early exit from `analyzer` using the `yyReturn`. Also note that the `action` functions and `yacc` function run under the same shared monad `m`, which means they can interact with each other through the monad. To make it convenient to use those constructors under the monad, three short-cuts are provided as follows.
+- As you see, there are two user-determined types involved, `r` and `a` that are already introduced above. `a` is for reportng a value to `yyLex` and thus `yacc`, and `r` is for stopping and exiting the `analyzer` immediately with the return value of a `r`. So, before reaching the end of stream, we can early exit from `analyzer` using the `yyReturn`. Also note that the `action` functions and `yacc` function run under the same shared monad `m`, which means they can interact with each other through the monad. To make it convenient to use those constructors under the monad, these three short-cuts are provided:
     ```haskell
     yyReturn :: Monad m => r -> m (ActionResult r a)
     yyReturn = return . Return
@@ -165,6 +165,7 @@ analyzer =
 ## Details about matching rules
 
 Patterns are always matched whether or not ...
+Every possible submatch
 
 ## Regular expression syntax
 
