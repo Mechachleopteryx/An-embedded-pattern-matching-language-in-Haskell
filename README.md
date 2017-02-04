@@ -250,7 +250,7 @@ ParseTerm    = <a character>
 
 - `"*"` (*Kleene closure*), `"+"` (*positive closure*), and `"?"` (*options*): `[regex|α*|]` matches α zero or more times, `[regex|α+|]` matches α one or more times, and `[regex|α?|]` matches α zero or one time, that is, matches α once but optionally.
 
-- `"${var}"` and `"${}"` (*reference to other regular expression*): a regular expression can contain references to other regular expressions and its own regular expression as well. `"${}"` represents the whole regular expression that is currently being defined, and it is used to make a self-recursive regular expression. `"${var}"` embeds a reference to other regular expression through a variable name. `"${var}"` actually can take on any Haskell expression as well that leads to a regular expression.
+- `"${var}"` and `"${}"` (*reference to other regular expression*): a regular expression can contain references to other regular expressions and its own regular expression as well. `"${}"` represents the whole regular expression that is currently being defined, and it is used to make a self-recursive regular expression. `"${var}"` embeds a reference to other regular expression through a variable name. `"${var}"` actually can take on any Haskell expression that leads to a regular expression.
 
     We can recognize a regular language of {a^n b^n | n >= 0} using the expression, `"x = (axb)?"`, which cannot be described with the ordinary (non-recursive) regular expressions, but only with the context-free grammar.
     ```haskell
