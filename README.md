@@ -165,7 +165,10 @@ analyzer =
 ## Details about matching rules
 
 Patterns are always matched whether or not ...
+
 Every possible submatch
+
+Be careful in using ".\*"
 
 ## Regular expressions
 
@@ -184,7 +187,7 @@ ParseTerm    = <a character>
              | ParseTerm { "?" | "*" | "+" }
 ```
 
-- `"|"` (*alternation*): `[regex|land|island|]` matches "land" and matches "island".
+- `"|"` (*alternation*): `[regex|foo|bar|]` matches "foo" and matches "bar", and `[regex|land|island|]` matches "land" and matches "island".
     ```haskell
     main :: IO ()
     main =
@@ -195,11 +198,26 @@ ParseTerm    = <a character>
             ]
     -- Output will be:
     -- *Main> main
-    -- foo
-    -- beep
+    -- land
+    -- island
     ```
-    
-    Note that the action is executed
+
+    Note, unlike the case with `[regex|foo|bar|]` that has no occurrences of matching both "foo" and "bar", `[regex|land|island|]` matches both alternatives at the moment it reads the character `"d"` from input, and in this case, the corresponding action is executed twice for each matched string. Also note that in such a case with `"|"` operator, we have no way of executing the action for one alternative over another. Whereas if we write the alternatives in separate rules we can choose one of the corresponding actions by using `yyAccept`.
+    ```haskell
+    main :: IO ()
+    main =
+        stream () "island"
+        $$ yyLex (const $ return ())
+        $$ rules [
+            rule [regex|island|] $ \s -> do putStrLn s; yyAccept (),
+            rule [regex|land|]   $ \s -> do putStrLn s; yyAccept ()
+            ]
+    -- Output will be:
+    -- *Main> main
+    -- island
+    ```
+
+- `"&"` (*and*): `[regex|α&β|]` matches a string that is matched with both α and β *at the same time*. So, `[regex|`[regex|foo.\*&.\*bar|]` matches a string from input that starts with "foo" and ends with "bar".
 
 ## More interesting applications
 
