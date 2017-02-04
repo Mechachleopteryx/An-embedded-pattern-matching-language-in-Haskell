@@ -271,7 +271,7 @@ ParseTerm    = <a character>
     -- aabb
     ```
 
-    Using a function returning regular expressions, we can even make more powerful expression that recognizes {a^n b^n c^n | n >= 1}, which is known not to be able to be described by the context-free grammar.
+    Using a function returning regular expressions, we can even make a more powerful expression that recognizes {a^n b^n c^n | n >= 1}, which is known that it cannot be described by the context-free grammar.
     ```haskell
     main :: IO ()
     main =
@@ -288,7 +288,8 @@ ParseTerm    = <a character>
     -- *Main> main
     -- aaabbbccc
     ```
-    left-recursion is not allowed.
+
+    Left-recursion is not allowed.
 
 ## More interesting applications
 
