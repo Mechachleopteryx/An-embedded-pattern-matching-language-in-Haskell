@@ -167,9 +167,39 @@ analyzer =
 Patterns are always matched whether or not ...
 Every possible submatch
 
-## Regular expression syntax
+## Regular expressions
 
-Haha
+The [LL grammar](https://en.wikipedia.org/wiki/LL_grammar) for regular expressions that rtlex takes is:
+```
+Regex        = ParseAlt
+ParseAlt     = ParseAlt "|" ParseAnd | ParseAnd              (left recursive)
+ParseAnd     = ParseAnd "&" ParseSeq | ParseSeq              (left recursive)
+ParseSeq     = ParseSeq ParseTerm | ParseTerm                (left recursive)
+ParseTerm    = <a character>
+             | "."
+             | "[" ["^"] <characters> "]"
+             | "${" [<a variable>] "}"
+             | "{" <a Haskell function> "}"
+             | "(" ParseAlt ")"
+             | ParseTerm { "?" | "*" | "+" }
+```
+
+- `"|"` (*alternation*): `[regex|land|island|]` matches "land" and matches "island".
+    ```haskell
+    main :: IO ()
+    main =
+        stream () "island"
+        $$ yyLex (const $ return ())
+        $$ rules [
+            rule [regex|land|island|] $ \s -> do putStrLn s; yyAccept ()
+            ]
+    -- Output will be:
+    -- *Main> main
+    -- foo
+    -- beep
+    ```
+    
+    Note that the action is executed
 
 ## More interesting applications
 
