@@ -175,9 +175,9 @@ Be careful in using ".\*"
 The [LL grammar](https://en.wikipedia.org/wiki/LL_grammar) for regular expressions that rtlex takes is:
 ```
 Regex        = ParseAlt
-ParseAlt     = ParseAlt "|" ParseAnd | ParseAnd              (left recursive)
-ParseAnd     = ParseAnd "&" ParseSeq | ParseSeq              (left recursive)
-ParseSeq     = ParseSeq ParseTerm | ParseTerm                (left recursive)
+ParseAlt     = ParseAlt "|" ParseAnd | ParseAnd              (left associative)
+ParseAnd     = ParseAnd "&" ParseSeq | ParseSeq              (left associative)
+ParseSeq     = ParseSeq ParseTerm | ParseTerm                (left associative)
 ParseTerm    = <a character>
              | "."
              | "[" ["^"] <characters> "]"
@@ -250,8 +250,26 @@ ParseTerm    = <a character>
 
 - `"*"` (*Kleene closure*), `"+"` (*positive closure*), and `"?"` (*options*): `[regex|α*|]` matches α zero or more times, `[regex|α+|]` matches α one or more times, and `[regex|α?|]` matches α zero or one time, that is, matches α once but optionally.
 
-- `"${var}"` and `"${}"` (*reference to other regular expression*):
+- `"${var}"` and `"${}"` (*reference to other regular expression*): a regular expression can contain references to other regular expressions and its own regular expression as well.
 
+    We can find a regular language of {a^n b^n | n >= 0} using the regular expression, `"x = (axb)?"`.
+    ```haskell
+    main :: IO ()
+    main =
+        stream () "aaaaaabbbaaabb"
+        $$ yyLex (const $ return ())
+        $$ rules [
+            rule [regex|(a${}b)?|] $ \s -> do putStrLn s; yyAccept ()
+            --or we could also use: rule (let x = [regex|(a${x}b)?|] in x) $ \s -> ...
+        ]
+    -- Output will be:
+    -- *Main> main
+    -- ab
+    -- aabb
+    -- aaabbb
+    -- ab
+    -- aabb
+    ```
     left-recursion is not allowed.
 
 ## More interesting applications
