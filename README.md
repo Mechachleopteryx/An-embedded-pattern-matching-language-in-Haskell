@@ -128,9 +128,9 @@ analyzer =
         ]
 ```
 
-- `QuasiQuotes` language extension is for specifying regular expressions within `[|regex|...|]`. And regular expressions are compiled (that is, encoded into regular expression ASTs) at compile-time. So, if there is an error in a regular expression, it will be reported at compile-time. The syntax and semantics for regular expressions are described below.
+- `QuasiQuotes` language extension is for specifying regular expressions within `[regex|...|]`. And regular expressions are compiled (that is, encoded into regular expression ASTs) at compile-time. So, if there is an error in a regular expression, it will be reported at compile-time. The syntax and semantics for regular expressions are described below.
 
-- `import Parser` imports the `[|regex|...|]` quasi quoter and the regular expression engine.
+- `import Parser` imports the `[regex|...|]` quasi quoter and the regular expression engine.
 
 - `import Rtlex` imports: `stream`, `yyLex`, `rules`, `($$)`, `rule`, `yyReturn`, `yyAccept`, and `yyReject`.
 
@@ -250,9 +250,9 @@ ParseTerm    = <a character>
 
 - `"*"` (*Kleene closure*), `"+"` (*positive closure*), and `"?"` (*options*): `[regex|α*|]` matches α zero or more times, `[regex|α+|]` matches α one or more times, and `[regex|α?|]` matches α zero or one time, that is, matches α once but optionally.
 
-- `"${var}"` and `"${}"` (*reference to other regular expression*): a regular expression can contain references to other regular expressions and its own regular expression as well.
+- `"${var}"` and `"${}"` (*reference to other regular expression*): a regular expression can contain references to other regular expressions and its own regular expression as well. `"${}"` represents the whole regular expression that is currently being defined, and it is used to make a self-recursive regular expression. `"${var}"` embeds a reference to other regular expression through a variable name. `"${var}"` actually can take on any Haskell expression as well that leads to a regular expression.
 
-    We can find a regular language of {a^n b^n | n >= 0} using the regular expression, `"x = (axb)?"`.
+    We can recognize a regular language of {a^n b^n | n >= 0} using the expression, `"x = (axb)?"`, which cannot be described with the ordinary (non-recursive) regular expressions, but only with the context-free grammar.
     ```haskell
     main :: IO ()
     main =
@@ -269,6 +269,24 @@ ParseTerm    = <a character>
     -- aaabbb
     -- ab
     -- aabb
+    ```
+
+    Using a function returning regular expressions, we can even make more powerful expression that recognizes {a^n b^n c^n | n >= 1}, which is known not to be able to be described by the context-free grammar.
+    ```haskell
+    main :: IO ()
+    main =
+        stream () "aaaabbbcccc"
+        $$ yyLex (const $ return ())
+        $$ rules [
+            rule [regex|${abc nul}|] $ \s -> do putStrLn s; yyAccept ()
+        ]
+
+        where
+        nul    = [regex|()|]  -- "()" represents ε that matches an empty string.
+        abc bc = let bc' = [regex|b${bc}c|] in
+                 [regex|a(${bc'}|${abc bc'})|]
+    -- *Main> main
+    -- aaabbbccc
     ```
     left-recursion is not allowed.
 
