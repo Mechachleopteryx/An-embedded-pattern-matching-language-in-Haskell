@@ -285,6 +285,8 @@ ParseTerm    = <a character>
         nul    = [regex|()|]  -- "()" represents ε that matches an empty string.
         abc bc = let bc' = [regex|b${bc}c|] in
                  [regex|a(${bc'}|${abc bc'})|]
+        -- To avoid left-recursion, we have used:
+        -- abc | aabbcc | aaabbbccc | ... == a(bc | a(bbcc | a(bbbccc | a(...)))).
     -- *Main> main
     -- aaabbbccc
     ```
