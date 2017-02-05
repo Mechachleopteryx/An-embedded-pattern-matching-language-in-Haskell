@@ -164,7 +164,7 @@ analyzer =
 
 ## Regular expressions
 
-In rtlex, patterns are written as regular expressions instead of in context-free grammar. Since the regular expressions here are extended to support the recursive regular expressions and the embedding of arbitray Haskell expressions that lead to other regular expressions, we will see these regular expressions are more powerful than context-free grammar. Moreover, the engine for matching such regular expressions is implemented with the [Glushkov NFA algorithm](http://sebfisch.github.io/haskell-regexp/), which runs efficiently in *O(nm)* where *n* is the length of the input and *m* the size of the regular expression. It also does not involve any backtracking to match every alternative in regular expressions, and so works best with real-time streams that are hard to take back characters that have already been consumed.
+In rtlex, patterns are written in regular expressions instead of in context-free grammar. Since the regular expressions here are extended to support the recursive regular expressions and the embedding of arbitray Haskell expressions that lead to other regular expressions, we will see these regular expressions are more powerful than context-free grammar. Moreover, the engine for matching such regular expressions is implemented with the [Glushkov NFA algorithm](http://sebfisch.github.io/haskell-regexp/), which runs efficiently in *O(nm)* where *n* is the length of the input and *m* the size of the regular expression. It also does not involve any backtracking to match every alternative in regular expressions, and so works best with real-time streams that are hard to take back characters that have already been consumed.
 
 The [LL grammar](https://en.wikipedia.org/wiki/LL_grammar) for regular expressions that rtlex takes is:
 ```
@@ -321,9 +321,23 @@ ParseTerm    = <a character>
 
 ## Details about matching rules
 
-Patterns are always matched whether or not ...
+Here we explain how the patterns, the actions, and the yacc are related to each other, how the patterns are matched, and how the actions and the yacc functions are called when the corresponding patterns are matched.
 
-Every possible submatch
+Every 1.possible (instead of longest) 2.submatch
+So, patterns are 3.always matched whether or not the corresponding actions are executed.
+
+matched actions (that is, actions corresponding to the matched patterns) are executed from top to bottom, only the 1st one is usually executed unless it ends with yyReject.
+
+`[regex|a*|]` with "aaaa"
+a1
+a2
+a1a2
+a3
+a2a3
+a1a2a3
+...
+
+Finally, `yacc` is called for each action that ends with yyAccept, and is given the result of each action as its argument.
 
 ## More interesting applications
 
