@@ -162,15 +162,9 @@ analyzer =
     yyReject = return Reject
     ```
 
-## Details about matching rules
-
-Patterns are always matched whether or not ...
-
-Every possible submatch
-
-Be careful in using ".\*"
-
 ## Regular expressions
+
+In rtlex, patterns are written as regular expressions instead of in context-free grammar. Since the regular expressions here are extended to support the recursive regular expressions and the embedding of arbitray Haskell expressions that lead to other regular expressions, we will see these regular expressions are more powerful than context-free grammar. Moreover, the engine for matching such regular expressions is implemented with the [Glushkov NFA algorithm](http://sebfisch.github.io/haskell-regexp/), which runs efficiently in *O(nm)* where *n* is the length of the input and *m* the size of the regular expression. It also does not involve any backtracking to match every alternative in regular expressions, and so works best with real-time streams that are hard to take back characters that have already been consumed.
 
 The [LL grammar](https://en.wikipedia.org/wiki/LL_grammar) for regular expressions that rtlex takes is:
 ```
@@ -307,7 +301,7 @@ ParseTerm    = <a character>
     -- B
     ```
 
-    The assertion function also acts as a converter, and so it can convert the partially mathced string up to its position into another string. In fact, in the above example, the assertion function actually converts a new-line character into the null string, `""`, otherwise the finally matched string that is printed on the screen would be "\nB" instead of "B". Also note that it returns the converted string in a list rather than as is. Actually, an assertion function can convert a string into multiple strings, and when some (or all) of the strings finally pass through all the remaining patterns behind the assertion function, they will be fed to their corresponding action.
+    The assertion function also acts as a converter, and so it can convert the partially matched string up to its position into another string. In fact, in the above example, the assertion function actually converts a new-line character into the null string, `""`, otherwise the finally matched string that is printed on the screen would be "\nB" instead of "B". Also note that it returns the converted string in a list rather than as is. Actually, an assertion function can convert a string into multiple strings, and when some (or all) of the strings finally pass through all the remaining patterns behind the assertion function, they will be fed to their corresponding action one be one.
     ```haskell
     main :: IO ()
     main =  -- finds ".he" only if it is "she", and converts it into "SHE".
@@ -324,6 +318,12 @@ ParseTerm    = <a character>
     Note that unlike the `yacc` function and `action` functions, assertion functions do not run under the user-specified monad. So, they cannot interact with each other, nor with `yacc` or `action` functions.
 
 - `"(...)"`: Regular expressions can be grouped in parentheses to limit the scope of operators. The empty parentheses `"()"` represents ε that matches an empty string. So, `"α?"` is an equivalent expression to `"α|()"`.
+
+## Details about matching rules
+
+Patterns are always matched whether or not ...
+
+Every possible submatch
 
 ## More interesting applications
 
