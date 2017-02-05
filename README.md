@@ -293,7 +293,7 @@ ParseTerm    = <a character>
 
     However, [left recursion](https://en.wikipedia.org/wiki/Left_recursion) should be avoided or it will lead to an infinite loop. Every recursive call has to be guarded by a (non-terminal) symbol just as with [parser combinators](https://en.wikipedia.org/wiki/Parser_combinator). For example, the expression, `"a*"` can be represented in context-free grammar as either `"X = (aX)?"` or `"X = (Xa)?"`, but the directly translated expression, `[regex|(${}a)?|]` corresponding to the latter will lead to an infinite loop. (Left recursions can be eliminated by left-factoring the grammar. See [here](https://en.wikipedia.org/wiki/Left_recursion).)
 
-- `"{fun}"`: For a zero-width assertion, We can embed a Haskell function into regular expressions. Functions should be of type `String -> [String]`, and they are provided as an argument with a partially matched string up to each position of them inside regular expressions. As each function acts as an assertion, it can decide whether it is matched or not based on the given matched string up to its position. For example, the following code matches a "B" only after a new-line. The first symbol is "." and matches any single character, so the function inside `{...}` takes as the argument s, the single-character string matched by ".". If s is a new-line, the function declares it is also matched by returning a non-empty list, `[""]`, otherwise it returns an empty list, which makes the current match fail and does not give a chance to the next symbol "B" to match with further character from input (The further character has to be matched from the start, with the first symbol ".").
+- `"{fun}"`: For a zero-width assertion, We can embed a Haskell function into regular expressions. Functions should be of type `String -> [String]`, and they are provided as an argument with a partially matched string up to each position of them inside regular expressions. As each function acts as an assertion, it can decide whether it is matched or not based on the given matched string up to its position. For example, the following code matches a "B" only after a new-line. The first symbol is "." and matches any single character, so the function inside `{...}` takes as the argument s, the single-character string matched by ".". If s is a new-line, the function declares that it is also matched by returning a non-empty list, `[""]`, otherwise it returns an empty list, which makes the current match fail and does not give a chance to the next symbol "B" to match with further character from input (The further character has to be matched from the start, with the first symbol ".").
     ```haskell
     main :: IO ()
     main =
@@ -307,8 +307,23 @@ ParseTerm    = <a character>
     -- B
     ```
 
-    The assertion function
-    converter, monadic
+    The assertion function also acts as a converter, and so it can convert the partially mathced string up to its position into another string. In fact, in the above example, the assertion function actually converts a new-line character into the null string, `""`, otherwise the finally matched string that is printed on the screen would be "\nB" instead of "B". Also note that it returns the converted string in a list rather than as is. Actually, an assertion function can convert a string into multiple strings, and when some (or all) of the strings finally pass through all the remaining patterns behind the assertion function, they will be fed to their corresponding action.
+    ```haskell
+    main :: IO ()
+    main =  -- finds ".he" only if it is "she", and converts it into "SHE".
+        stream () "he she and they"
+        $$ yyLex (const $ return ())
+        $$ rules [
+            rule [regex|.he{\s -> if s == "she" then ["SHE"] else []}|] $
+                \s -> do putStrLn s; yyAccept ()
+        ]
+    -- *Main> main
+    -- SHE
+    ```
+
+    Note that unlike the `yacc` function and `action` functions, assertion functions do not run under the user-specified monad. So, they cannot interact with each other, nor with `yacc` or `action` functions.
+
+- `"(...)"`: Regular expressions can be grouped in parentheses to limit the scope of operators. The empty parentheses `"()"` represents ε that matches an empty string. So, `"α?"` is an equivalent expression to `"α|()"`.
 
 ## More interesting applications
 
