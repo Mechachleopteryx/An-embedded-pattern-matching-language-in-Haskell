@@ -234,7 +234,7 @@ ParseTerm    = <a character>
     -- 23lm 
     ```
 
-- (*Operator precedence*): all operators are listed from the highest precedence to the lowest as:
+- (*Operator precedence*): All operators are listed from the highest precedence to the lowest as:
     ```
     ?, *, +                             (postfix, same precedence)
     sequencing (juxtaposition)          (binary, left-associative)
@@ -246,13 +246,13 @@ ParseTerm    = <a character>
 
 - `"[...]"` (*character class*) and `"[^...]"` (*negated character class*): `"[...]"` matches any single character from input that is listed inside the bracket, and `"[^...]"` matches one that does not listed inside it. (As for now, the character classes do not recognize character ranges such as `"[0-9]"`, so every character should be listed literally like as `"[0123456789]"`.)
 
-- "\\*char*" (*escaped character*): not implemented yet.
+- "\\*char*" (*escaped character*): Meta characters used as regular expression operators can be escaped with a preceding backslash `"\"`, and single-character escape codes such as `"\n"` can be used the same as in the Haskell and the C languages. 
 
 - `"*"` (*Kleene closure*), `"+"` (*positive closure*), and `"?"` (*options*): `[regex|α*|]` matches α zero or more times, `[regex|α+|]` matches α one or more times, and `[regex|α?|]` matches α zero or one time, that is, matches α once but optionally.
 
-- `"${var}"` and `"${}"` (*reference to other regular expression*): a regular expression can contain references to other regular expressions and its own regular expression as well. `"${}"` represents the whole regular expression that is currently being defined, and it is used to make a self-recursive regular expression. `"${var}"` embeds a reference to other regular expression through a variable name. `"${var}"` actually can take on any Haskell expression that leads to a regular expression.
+- `"${var}"` and `"${}"` (*reference to other regular expression*): A regular expression can contain references to other regular expressions and its own regular expression as well. `"${}"` represents the whole regular expression that is currently being defined, and it is used to make a self-recursive regular expression. `"${var}"` embeds a reference to other regular expression through a variable name. `"${var}"` actually can take on any Haskell expression that leads to a regular expression.
 
-    We can recognize a regular language of {a^n b^n | n >= 0} using the expression, `"x = (axb)?"`, which cannot be described with the ordinary (non-recursive) regular expressions, but only with the context-free grammar.
+    We can recognize a regular language of {a^n b^n | n >= 0} using the expression, `"X = (aXb)?"`, which cannot be described with the ordinary (non-recursive) regular expressions, but only with the context-free grammar.
     ```haskell
     main :: IO ()
     main =
@@ -291,7 +291,24 @@ ParseTerm    = <a character>
     -- aaabbbccc
     ```
 
-    Left-recursion is not allowed.
+    However, [left recursion](https://en.wikipedia.org/wiki/Left_recursion) should be avoided or it will lead to an infinite loop. Every recursive call has to be guarded by a (non-terminal) symbol just as with [parser combinators](https://en.wikipedia.org/wiki/Parser_combinator). For example, the expression, `"a*"` can be represented in context-free grammar as either `"X = (aX)?"` or `"X = (Xa)?"`, but the directly translated expression, `[regex|(${}a)?|]` corresponding to the latter will lead to an infinite loop. (Left recursions can be eliminated by left-factoring the grammar. See [here](https://en.wikipedia.org/wiki/Left_recursion).)
+
+- `"{fun}"`: For a zero-width assertion, We can embed a Haskell function into regular expressions. Functions should be of type `String -> [String]`, and they are provided as an argument with a partially matched string up to each position of them inside regular expressions. As each function acts as an assertion, it can decide whether it is matched or not based on the given matched string up to its position. For example, the following code matches a "B" only after a new-line. The first symbol is "." and matches any single character, so the function inside `{...}` takes as the argument s, the single-character string matched by ".". If s is a new-line, the function declares it is also matched by returning a non-empty list, `[""]`, otherwise it returns an empty list, which makes the current match fail and does not give a chance to the next symbol "B" to match with further character from input (The further character has to be matched from the start, with the first symbol ".").
+    ```haskell
+    main :: IO ()
+    main =
+        stream () "A is A.\nB is B.\nC is C.\n"
+        $$ yyLex (const $ return ())
+        $$ rules [
+            rule [regex|.{\s -> if s == "\n" then [""] else []}B|] $
+                \s -> do putStrLn s; yyAccept ()
+        ]
+    -- *Main> main
+    -- B
+    ```
+
+    The assertion function
+    converter, monadic
 
 ## More interesting applications
 
