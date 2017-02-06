@@ -352,9 +352,9 @@ main =
 -- abd
 ```
 
-#### Each action is called by default whenever its corresponding pattern is matched.
+#### Actions are executed from top to bottom, but selectively.
 
-`rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called (by default) with the matched string by the pattern as an argument. Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
+`rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
 ```haskell
 data ActionResult r a
     = Return r  -- to finish the lexical analyzer immediately with value "r"
@@ -395,6 +395,22 @@ main =
         rule [regex|he|]  $ \s -> do putStrLn s; yyAccept ()
     ]
 -- *Main> main
+-- she
+```
+
+#### A pattern can pass multiple strings to the corresponding action in a match.
+
+The last example above can be rewritten with a single pattern as follows. As the `[regex|he|she|]` pattern can match "he" and "she" when reading "she" from the input stream, it passes both of them in a list, and the corresponding action is then called for each of them.
+```haskell
+main :: IO ()
+main =
+    stream () "she"
+    $$ yyLex (const $ return ())
+    $$ rules [
+        rule [regex|he|she|] $ \s -> do putStrLn s; yyAccept ()
+    ]
+-- *Main> main
+-- he
 -- she
 ```
 
