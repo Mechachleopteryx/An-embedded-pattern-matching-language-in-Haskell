@@ -8,7 +8,7 @@ Actions that will run when corresponding patterns are matched are ordinary Haske
 
 ## Why to analyze in real-time?
 
-The legacy `lex` matches its patterns in such a way that:
+Legacy lexical analyzers like [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)) are based on finding *the earliest and the longest match* and so try to match their patterns in such a way that:
 - it tries to match patterns from top to bottom and one by one (or concurrently if it is "smart" enough),
 - if it finds a pattern matches a string that it has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries further patterns (including the currently matched pattern as well) for any possible longer matches, and
 - if there are no more patterns that successfully match as characters are read from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for the input.
