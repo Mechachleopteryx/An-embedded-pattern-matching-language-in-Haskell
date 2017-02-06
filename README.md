@@ -321,7 +321,9 @@ ParseTerm    = <a character>
 
 ## Details about matching rules
 
-Whereas legacy lexical analyzers are eager to find *the earlies and the longest submatch*, rtlex tries to find *every possible submatch*. For that, rtlex keeps matching all patterns constantly and simultaneously. *Constantly*, because when it reads every character from input rtlex tries all patterns, thinking as if the character starts a new match with all the patterns. *Simultaneously*, because rtlex considers the possibilities of successful matching for all the patterns at a time, so that it does not need to backtrack and reconsider some unconsidered patterns later.
+#### Every possible submatch rather than the earliest and the longest submatch
+
+Whereas legacy lexical analyzers are eager to find *the earliest and the longest submatch*, rtlex tries to find *every possible submatch*. For that, rtlex keeps matching all patterns constantly and simultaneously. *Constantly*, because when it reads every input character from a stream rtlex tries all patterns, thinking as if the character starts a new match with all the patterns. *Simultaneously*, because rtlex considers the possibilities of successful matching for all the patterns at a time, so that it does not need to backtrack and reconsider some unconsidered patterns later.
 
 Here, while reading the second occurrence of "aba" from input, rtlex considers it as a new match with the `[regex|abac|]` pattern, even though rtlex is in the middle of considering the first occurrence of "aba" with the same pattern.
 ```haskell
@@ -335,6 +337,7 @@ main =
 -- *Main> main
 -- abc
 ```
+
 
 In this code, rtlex considers the two patterns simultaneously while reading "ab" from input.
 ```haskell
