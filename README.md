@@ -338,8 +338,7 @@ main =
 -- abc
 ```
 
-
-In this code, rtlex considers the two patterns simultaneously while reading "ab" from input.
+In the code below, rtlex considers the two patterns simultaneously while reading "ab" from input.
 ```haskell
 main :: IO ()
 main =
@@ -353,6 +352,55 @@ main =
 -- abd
 ```
 
+#### Each action is called by default whenever its corresponding pattern is matched.
+
+`rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called (by default) with the matched string by the pattern as an argument. Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
+```haskell
+data ActionResult r a
+    = Return r  -- to finish the lexical analyzer immediately with value "r"
+    | Accept a  -- to accept the current match and report value "a" to lexical analyzer
+    | Reject    -- to reject the current match and try other actions
+
+yyReturn :: Monad m => r -> m (ActionResult r a)
+yyReturn = return . Return
+
+yyAccept :: Monad m => a -> m (ActionResult r a)
+yyAccept = return . Accept
+
+yyReject :: Monad m => m (ActionResult r a)
+yyReject = return Reject
+```
+
+However, unlike patterns that are tried to match constantly and simultaneously, not all matched actions (that is, actions with the corresponding matched patterns) are executed always. As monads, actions are executed in the order of top-to-bottom, and each action is executed only if all its previous actions give it a way by returning `Reject`. In other words, if an action returns `Accept`, the actions below it are not executed. (Note, however, returning `Reject` or `Accept` affects only the execution of actions and has nothing to do with matching their patterns; all the patterns are tried matching always!)
+```haskell
+main :: IO ()
+main =
+    stream () "she"
+    $$ yyLex (const $ return ())
+    $$ rules [
+        rule [regex|she|] $ \s -> do putStrLn s; yyReject,
+        rule [regex|he|]  $ \s -> do putStrLn s; yyAccept ()
+    ]
+-- *Main> main
+-- she
+-- he
+```
+```haskell
+main :: IO ()
+main =
+    stream () "she"
+    $$ yyLex (const $ return ())
+    $$ rules [
+        rule [regex|she|] $ \s -> do putStrLn s; yyAccept (),
+        rule [regex|he|]  $ \s -> do putStrLn s; yyAccept ()
+    ]
+-- *Main> main
+-- she
+```
+
+- `yyReturn` is used for exiting from the lexical analyzer immediately and returning a value of type `r` as a result, which can be also returned from `stream` when the end of stream is reached.
+
+- `yyAccept` returns a value of type `a` to the `yyLex` from its action, and the other matched actions below this action will not be executed.
 
 Here we explain how the patterns, the actions, and the yacc are related to each other, how the patterns are matched, and how the actions and the yacc functions are called when the corresponding patterns are matched.
 
