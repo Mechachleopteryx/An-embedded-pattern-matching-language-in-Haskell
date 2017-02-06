@@ -8,20 +8,20 @@ Actions that will run when corresponding patterns are matched are ordinary Haske
 
 ## Why to analyze in real-time?
 
-Legacy lexical analyzer like [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)) is based on finding *the earliest and the longest match* and so tries to match its patterns in such a way that:
+Legacy lexical analyzer like [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)) is based on finding *the earliest and the longest submatch* and so tries to match its patterns in such a way that:
 - it tries to match its patterns from top to bottom and one by one (or simultaneously if it is "smart" enough),
-- if it finds a pattern matches a string that is has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries its further patterns (including the currently matched pattern as well) for any possible longer matches, and
+- if it finds a pattern matches a string that is has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries other patterns (including the currently matched pattern as well) for any possible longer matches, and
 - if there are no more patterns that successfully match as it reads characters from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for further input.
 
-For example, if the legacy `lex` has the following two rules,
+For example, if a legacy lexical analyzer has the following two rules,
 ```
 %%
 helloworld { printf("1st action\n"); }
 hello      { printf("2nd action\n"); }
 ```
-and if we give it the input, `"helloworld"`, it will not execute any action until it completes to read the whole input string, and then it executes only the first action. That is, even after it reads `"hello"` in the middle of the input string it does not execute the second action immediately, because at that moment it does not know whether the first pattern will match with further input characters or not. It does not execute the second action in preference for a longer match. What if we give it the input, `"helloworks"`? This time, the second action will be executed as expected, but will be executed only when it reads the character `'k'` which is the first clue of no success of matching with the first pattern. That means, depending on other patterns, the action corresponding to a matched pattern may not be executed immediately.
+and if we give it the input, "helloworld", it will not execute either action until it completes to read the whole input string, and then it will execute only the first action. At the moment if reads 'o' in the middle of input, it knows the second pattern can match, but it does not execute the second action immediately, because it wants to match patterns with further input characters as long as possible. And finally when it knows the first pattern matches with the whole input string, it executes the first action, ignoring the second action. What if we give it the input, "helloworks"? This time, the second action will be executed as expected, but will be executed only when it reads the character 'k', which is the first clue of no success of matching with the first pattern. That means, depending on other patterns, the action corresponding to a matched pattern may not be executed immediately.
 
-Note that most lexers (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns simultanenously, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (In fact, if they want to be "smart", they need to include actions into the regular expressions (regular expression ASTs, to be accurate) and then combine all the regular expressions across rules into a single regular expression, before starting to match them with input.)
+Note that most lexical analyzers (including the `flex`) are not so "smart" enough to match multiple patterns simultanenously, and when they get to know the first pattern does not match "helloworks" at the character 'k' they simply backtracks and try to match the second pattern back from the start of the input. (In fact, if they are to be "smart", they need to include actions into the regular expressions (regular expression ASTs, to be accurate) and then combine all the regular expressions across rules into a single regular expression, before starting to match them.)
 
 So, to facilitate the analysis of real-time streams, rtlex features:
 > - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
@@ -320,6 +320,32 @@ ParseTerm    = <a character>
 - `"(...)"`: Regular expressions can be grouped in parentheses to limit the scope of operators. The empty parentheses `"()"` represents ε that matches an empty string. So, `"α?"` is an equivalent expression to `"α|()"`.
 
 ## Details about matching rules
+
+Whereas legacy lexical analyzers are eager to find *the earlies and the longest submatch*, rtlex tries to find *every possible submatch*. For that, rtlex keeps matching all patterns constantly and simultaneously. *Constantly*, because when it reads every character from input rtlex tries all patterns, thinking as if the character starts a new match with all the patterns. *Simultaneously*, because rtlex considers the possibilities of successful matching for all the patterns at a time, so that it does not need to backtrack and reconsider some unconsidered patterns later.
+```haskell
+-- Here while reading the second occurrence of "aba" from input, rtlex considers it as a new match with the [regex|abac|] pattern, even though rtlex is considering the first occurrence of "aba" with the same pattern.
+-- the prefix "aba"
+main :: IO ()
+main =
+    stream () "ababac"
+    $$ yyLex (const $ return ())
+    $$ rules [
+        rule [regex|abac|] $ \s -> do putStrLn s; yyAccept (),
+    ]
+-- *Main> main
+-- abc
+```
+```haskell
+main :: IO ()
+main =
+    stream () "abcde"
+    $$ yyLex (const $ return ())
+    $$ rules [
+        rule [regex|abc|] $ \s -> do putStrLn s; yyAccept (),
+        rule [regex|bcd|] $ \s -> do putStrLn s; yyAccept (),
+        rule [regex|cde|] $ \s -> do putStrLn s; yyAccept ()
+    ]
+```
 
 Here we explain how the patterns, the actions, and the yacc are related to each other, how the patterns are matched, and how the actions and the yacc functions are called when the corresponding patterns are matched.
 
