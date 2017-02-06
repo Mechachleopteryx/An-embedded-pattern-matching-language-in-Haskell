@@ -322,30 +322,34 @@ ParseTerm    = <a character>
 ## Details about matching rules
 
 Whereas legacy lexical analyzers are eager to find *the earlies and the longest submatch*, rtlex tries to find *every possible submatch*. For that, rtlex keeps matching all patterns constantly and simultaneously. *Constantly*, because when it reads every character from input rtlex tries all patterns, thinking as if the character starts a new match with all the patterns. *Simultaneously*, because rtlex considers the possibilities of successful matching for all the patterns at a time, so that it does not need to backtrack and reconsider some unconsidered patterns later.
+
+Here, while reading the second occurrence of "aba" from input, rtlex considers it as a new match with the `[regex|abac|]` pattern, even though rtlex is in the middle of considering the first occurrence of "aba" with the same pattern.
 ```haskell
--- Here while reading the second occurrence of "aba" from input, rtlex considers it as a new match with the [regex|abac|] pattern, even though rtlex is considering the first occurrence of "aba" with the same pattern.
--- the prefix "aba"
 main :: IO ()
 main =
     stream () "ababac"
     $$ yyLex (const $ return ())
     $$ rules [
-        rule [regex|abac|] $ \s -> do putStrLn s; yyAccept (),
+        rule [regex|abac|] $ \s -> do putStrLn s; yyAccept ()
     ]
 -- *Main> main
 -- abc
 ```
+
+In this code, rtlex considers the two patterns simultaneously while reading "ab" from input.
 ```haskell
 main :: IO ()
 main =
-    stream () "abcde"
+    stream () "abd"
     $$ yyLex (const $ return ())
     $$ rules [
         rule [regex|abc|] $ \s -> do putStrLn s; yyAccept (),
-        rule [regex|bcd|] $ \s -> do putStrLn s; yyAccept (),
-        rule [regex|cde|] $ \s -> do putStrLn s; yyAccept ()
+        rule [regex|abd|] $ \s -> do putStrLn s; yyAccept ()
     ]
+-- *Main> main
+-- abd
 ```
+
 
 Here we explain how the patterns, the actions, and the yacc are related to each other, how the patterns are matched, and how the actions and the yacc functions are called when the corresponding patterns are matched.
 
