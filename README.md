@@ -400,7 +400,7 @@ main =
 
 #### A pattern can pass multiple strings to the corresponding action in a match.
 
-The last example above can be rewritten with a single pattern as follows. As the `[regex|he|she|]` pattern can match "he" and "she" when reading "she" from the input stream, it passes both of them in a list, and the corresponding action is then called for each of them.
+The last example above can be rewritten with a single pattern as follows. As the `[regex|he|she|]` pattern can match "he" and "she" when reading "she" from the input stream, it passes both of them in a list over to its action, and the action is then called for each of them. And in this case, we cannot control the multiple executions of the same action with `Accept` or `Reject`, as they only affect the execution of actions below.
 ```haskell
 main :: IO ()
 main =
@@ -413,6 +413,9 @@ main =
 -- he
 -- she
 ```
+
+Be careful when using quantification operators, rtlex will return all the possible (sub-)strings matched.
+
 
 - `yyReturn` is used for exiting from the lexical analyzer immediately and returning a value of type `r` as a result, which can be also returned from `stream` when the end of stream is reached.
 
