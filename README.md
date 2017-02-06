@@ -8,10 +8,10 @@ Actions that will run when corresponding patterns are matched are ordinary Haske
 
 ## Why to analyze in real-time?
 
-Legacy lexical analyzers like [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)) are based on finding *the earliest and the longest match* and so try to match their patterns in such a way that:
-- it tries to match patterns from top to bottom and one by one (or concurrently if it is "smart" enough),
-- if it finds a pattern matches a string that it has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries further patterns (including the currently matched pattern as well) for any possible longer matches, and
-- if there are no more patterns that successfully match as characters are read from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for the input.
+Legacy lexical analyzer like [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)) is based on finding *the earliest and the longest match* and so tries to match its patterns in such a way that:
+- it tries to match its patterns from top to bottom and one by one (or simultaneously if it is "smart" enough),
+- if it finds a pattern matches a string that is has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries its further patterns (including the currently matched pattern as well) for any possible longer matches, and
+- if there are no more patterns that successfully match as it reads characters from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for further input.
 
 For example, if the legacy `lex` has the following two rules,
 ```
@@ -21,11 +21,11 @@ hello      { printf("2nd action\n"); }
 ```
 and if we give it the input, `"helloworld"`, it will not execute any action until it completes to read the whole input string, and then it executes only the first action. That is, even after it reads `"hello"` in the middle of the input string it does not execute the second action immediately, because at that moment it does not know whether the first pattern will match with further input characters or not. It does not execute the second action in preference for a longer match. What if we give it the input, `"helloworks"`? This time, the second action will be executed as expected, but will be executed only when it reads the character `'k'` which is the first clue of no success of matching with the first pattern. That means, depending on other patterns, the action corresponding to a matched pattern may not be executed immediately.
 
-Note that most lexers (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns concurrently, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (In fact, if they want to be "smart", they need to include actions into the regular expressions (regular expression ASTs, to be accurate) and then combine all the regular expressions across rules into a single regular expression, before starting to match them with input.)
+Note that most lexers (including the [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator))) are not so "smart" enough to match multiple patterns simultanenously, and when they get to know the first pattern does not match `"helloworks"` at the character `'k'` they simply try to match the second pattern back from the start of the input. (In fact, if they want to be "smart", they need to include actions into the regular expressions (regular expression ASTs, to be accurate) and then combine all the regular expressions across rules into a single regular expression, before starting to match them with input.)
 
 So, to facilitate the analysis of real-time streams, rtlex features:
 > - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
-> - concurrent matching of all patterns, rather than trying patterns one by one. (By concurrent, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and then another pattern is tried.)
+> - simultaneous matching of all patterns, rather than trying patterns one by one. (By simultaneous, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and then another pattern is tried.)
 
 ## An example
 
@@ -164,7 +164,7 @@ analyzer =
 
 ## Regular expressions
 
-In rtlex, patterns are written in regular expressions instead of in context-free grammar. Since the regular expressions here are extended to support the recursive regular expressions and the embedding of arbitray Haskell expressions that lead to other regular expressions, we will see these regular expressions are more powerful than context-free grammar. Moreover, the engine for matching such regular expressions is implemented with the [Glushkov NFA algorithm](http://sebfisch.github.io/haskell-regexp/), which runs efficiently in *O(nm)* where *n* is the length of the input and *m* the size of the regular expression. It also does not involve any backtracking to match every alternative in regular expressions, and so works best with real-time streams that are hard to take back characters that have already been consumed.
+In rtlex, patterns are written in regular expressions instead of in context-free grammar. Since the regular expressions here are extended to embed any Haskell expressions (as well as variables) that lead to other regular expressions, we will see these regular expressions are more powerful than context-free grammar in terms of the recognizable languages. Moreover, the engine for matching such regular expressions is implemented with the [Glushkov NFA algorithm](http://sebfisch.github.io/haskell-regexp/), which runs efficiently in *O(nm)* where *n* is the length of the input and *m* the size of the regular expression. It also does not involve any backtracking to match every alternative in regular expressions, and so works best with real-time streams that are hard to take back characters that have already been consumed.
 
 The [LL grammar](https://en.wikipedia.org/wiki/LL_grammar) for regular expressions that rtlex takes is:
 ```
