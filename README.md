@@ -510,6 +510,9 @@ gather =  -- in the IO monad
 -- ["ha","hi","ho","ho","ha","ha"]
 ```
 
+#### About `r`
+The `r` is the type of the final result from our lexical analyzer. It can be returned by either `stream` or an action. `stream` returns an `r` when it has reached the end of its stream. An action can use `yyReturn` to return an `r`, making our lexical analyzer stop immediately.
+
 ## More interesting applications
 
 Every 1.possible (instead of longest) 2.submatch
