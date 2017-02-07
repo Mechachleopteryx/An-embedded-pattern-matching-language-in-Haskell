@@ -359,8 +359,13 @@ main =
     stream () "aaabbbbbbccc"
     $$ yyLex (const $ return ())
     $$ rules [
+        -- repeated b's are discarded
         rule [regex|bb|]    $ \s -> yyAccept (),
+
+        -- catch the first b
         rule [regex|b|]     $ \s -> do putStrLn "Start of b's"; yyAccept (),
+
+        -- catch the last b
         rule [regex|b[^b]|] $ \s -> do putStrLn "End of b's"; yyAccept ()
     ]
 -- *Main> main
@@ -476,11 +481,38 @@ So, we can just think that an action is called for each match regardless of whet
 
 #### `yyLex` is also called for each match, but with some other value than the matched string.
 
-The `yyLex` is called whenever a matched action returns something using `yyAccept`, and then `yyLex` calls the `yacc` that is specified as the argument and feeds the returned result from the action to `yacc`. So, whenever there is a match, a corresponding action is called and then `yacc` is called as well. But, whereas action is given the matched string as its argument, `yacc` is given the result that is returned by such an action.
+The `yyLex` is called whenever a matched action returns something using `yyAccept`, and then `yyLex` calls the `yacc` that is specified as the argument and feeds the returned result from the action to `yacc`. So, whenever there is a match, a corresponding action is called and then `yacc` is called as well. But, whereas action is given the matched string as its argument, `yacc` is given the result that is returned by such an action. In a sense, we can think of actions as converters from String into a value of a user-determined type `a`.
+```
+action :: String -> m (ActionResult r a)
+yacc   :: a -> m b
+```
+
+The `yacc` returns `m b`, a value wrapped in a user-determined monad `m`. However, since `yacc` is called each time there is a match from a pattern, and since it is not called at once with all the matches together, the intermediate results of `m b` cannot be used outside of `yacc`, and they are simply ignored (actually, reserved for future use) when outside of `yacc`. That's actually what `yacc` is for. If we want to process the result from an action each time a pattern matches, we put the procedure into `yacc`. However, if we want the results from actions at once at the end of lexical analysis, we need to gather those results using some monad.
+```haskell
+import Control.Monad.State
+
+gather :: IO [String]
+gather =  -- in the IO monad
+    flip execStateT [] $
+    -- execStateT returns the final state and discards the final value, which is () 
+    -- returned from stream ().
+
+    stream () "ha ha ho ho hi ha"
+
+    $$ yyLex (\s -> do  -- in the "StateT [String] IO" monad
+        modify $ (s:))  -- stores each word in a list
+
+    $$ rules [
+        rule [regex|ha|ho|hi|] $ \s -> yyAccept s  -- reports each word to the yyLex.
+        ]
+
+-- *Main> gather
+-- ["ha","hi","ho","ho","ha","ha"]
+```
+
+## More interesting applications
 
 Every 1.possible (instead of longest) 2.submatch
 So, patterns are 3.always matched whether or not the corresponding actions are executed.
-
-## More interesting applications
 
 Hoho
