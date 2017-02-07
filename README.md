@@ -513,9 +513,60 @@ gather =  -- in the IO monad
 #### About `r`
 The `r` is the type of the final result from our lexical analyzer. It can be returned by either `stream` or an action. `stream` returns an `r` when it has reached the end of its stream. An action can use `yyReturn` to return an `r`, making our lexical analyzer stop immediately. If our lexical analyzer needs to keep running to the end of a stream, chances are we don't it in any actions unless there is an exceptional case in the stream. But, if we expect our lexical analyzer to exit early when encountering a certain pattern in the stream, we can make use of it.
 
-## More interesting applications
+?? Every 1.possible (instead of longest) 2.submatch
+?? So, patterns are 3.always matched whether or not the corresponding actions are executed.
 
-Every 1.possible (instead of longest) 2.submatch
-So, patterns are 3.always matched whether or not the corresponding actions are executed.
+## Network streams
 
-Hoho
+Instead of `stream`, a more generic stream-reading function `stream0` is provided to work with any stream of an instance of `Stream` class. By defining a proper `getc` for a custom stream, we can use it with `stream0`.
+```haskell
+class Stream s m r c | s -> r c where -- needs FunctionalDependencies
+    getc :: s -> m (Either r (c, s))
+    -- getc will return either r in case of an error in the stream, or (c, s) otherwise.
+```
+
+For example, we can make an example server program that outputs the string as is on the console, only converting "a"s into "A"s.
+```haskell
+{-# LANGUAGE QuasiQuotes, MultiParamTypeClasses #-}
+import Parser
+import Rtlex
+import Control.Monad
+import Network
+import System.IO
+import System.IO.Error
+
+-- Handle from IO monad as a Stream instance
+instance Stream Handle IO Int Char where  -- needs MultiParamTypeClasses
+    getc handle =
+        catchIOError
+        (do c <- hGetChar handle; return $ Right (c, handle))
+        (\e -> return $ Left $ if isEOFError e then 0 else -1)
+        -- r == 0 if EOFError, -1 for other errors
+
+main :: IO ()
+main = withSocketsDo $ do  -- in the IO monad
+    sock <- listenOn $ PortNumber 3001
+    putStrLn "Starting server ..."
+    (handle, host, port) <- accept sock
+
+    stream0 handle
+        $$ yyLex putStr
+        $$ rules [
+            rule [regex|a|] $ \s -> yyAccept "A",  -- convert each "a" into "A".
+            rule [regex|.|] $ \s -> yyAccept s     -- leave it intact, otherwise.
+            ]
+
+    hClose handle
+    putStrLn "Server closed."
+```
+
+When we run the above program and run some client program, we will get:
+```
+[~/haskell]nc localhost 3001
+abaccab
+
+*Main> main
+Starting server ...
+AbAccAb
+Server closed.
+```
