@@ -352,6 +352,22 @@ main =
 -- abd
 ```
 
+Using the nature of finding "every possible submatches", we can detect the start and the end of a pattern in real-time when the pattern matches repeatedly and consecutively.
+```haskell
+main :: IO ()
+main =
+    stream () "aaabbbbbbccc"
+    $$ yyLex (const $ return ())
+    $$ rules [
+        rule [regex|bb|]    $ \s -> yyAccept (),
+        rule [regex|b|]     $ \s -> do putStrLn "Start of b's"; yyAccept (),
+        rule [regex|b[^b]|] $ \s -> do putStrLn "End of b's"; yyAccept ()
+    ]
+-- *Main> main
+-- Start of b's
+-- End of b's
+```
+
 #### Actions are executed from top to bottom, but selectively.
 
 The `rule` combines a quasi-quoted regular expression and a user-defined action into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. Every action has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
@@ -439,35 +455,31 @@ a<sub>3</sub>
 a<sub>2</sub>a<sub>3</sub>
 a<sub>1</sub>a<sub>2</sub>a<sub>3</sub></pre>
 
-Then, we might have a question, if an action is called multiple times for each matched string by the corresponding pattern, and if the action returns `Accept` for some of the strings and `Reject` for others, how does it affect the action that follows it?
+Then, we might have a question, if an action is called multiple times in a match, for each matched string by the corresponding pattern, and if the action returns `Accept` for some of the strings and `Reject` for others, how does it affect the action that follows it? The answer is that the action behaves the same when it is called separately for different matches from its pattern, so we do not need to consider this case specially.
 ```haskell
+import Data.Char (toUpper)
 main :: IO ()
 main =
     stream () "abc"
-    $$ yyLex (\s -> putStrLn s)
+    $$ yyLex putStrLn 
     $$ rules [
         rule [regex|ab|b|] $ \s -> if s == "b" then yyAccept s else yyReject,
-        rule [regex|c|]    $ \s -> yyAccept s
+        rule [regex|.b{\s -> [map toUpper s]}|] $ \s -> yyAccept s
     ]
 -- *Main> main
 -- b
--- c
+-- AB
 ```
-As we can see from the above code, 
+In the above example, at the moment the character 'b' is reached, the first pattern `[regex|ab|b|]` matches both "ab" and "b" at the same time, and the corresponding action returns `yyAccept "b"` for "b" and `yyReject` for "ab". Although this case is processed in a rather complex way internally, we can easily think that "b" is accepted and gets passed to `putStrLn` through `yyLex`, and at the same time, since "ab" is ignored by the first action the second action is executed and converts it into its capitalized string, which is then passed over to `putStrLn` as is `yyAccept`ed.
 
+So, we can just think that an action is called for each match regardless of whether the matches occur at the same time in a pattern or not.
 
-- `yyReturn` is used for exiting from the lexical analyzer immediately and returning a value of type `r` as a result, which can be also returned from `stream` when the end of stream is reached.
+#### `yyLex` is also called for each match, but with some other value than the matched string.
 
-- `yyAccept` returns a value of type `a` to the `yyLex` from its action, and the other matched actions below this action will not be executed.
-
-Here we explain how the patterns, the actions, and the yacc are related to each other, how the patterns are matched, and how the actions and the yacc functions are called when the corresponding patterns are matched.
+The `yyLex` is called whenever a matched action returns something using `yyAccept`, and then `yyLex` calls the `yacc` that is specified as the argument and feeds the returned result from the action to `yacc`. So, whenever there is a match, a corresponding action is called and then `yacc` is called as well. But, whereas action is given the matched string as its argument, `yacc` is given the result that is returned by such an action.
 
 Every 1.possible (instead of longest) 2.submatch
 So, patterns are 3.always matched whether or not the corresponding actions are executed.
-
-matched actions (that is, actions corresponding to the matched patterns) are executed from top to bottom, only the 1st one is usually executed unless it ends with yyReject.
-
-Finally, `yacc` is called for each action that ends with yyAccept, and is given the result of each action as its argument.
 
 ## More interesting applications
 
