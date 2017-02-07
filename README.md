@@ -525,7 +525,7 @@ class Stream s m r c | s -> r c where -- needs FunctionalDependencies
     -- getc will return either r in case of an error in the stream, or (c, s) otherwise.
 ```
 
-For example, we can make an example server program that outputs the string as is on the console, only converting every "a" into capitalized "A".
+For example, we can make an example server program that outputs the string received from client as is on the console, only converting every "a" into capitalized "A".
 ```haskell
 {-# LANGUAGE QuasiQuotes, MultiParamTypeClasses #-}
 import Parser
