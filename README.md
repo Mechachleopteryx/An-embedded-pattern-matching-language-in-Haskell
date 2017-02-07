@@ -528,6 +528,7 @@ class Stream s m r c | s -> r c where -- needs FunctionalDependencies
 For example, we can make an example server program that outputs the string received from client as is on the console, only converting every "a" into capitalized "A".
 ```haskell
 {-# LANGUAGE QuasiQuotes, MultiParamTypeClasses #-}
+
 import Parser
 import Rtlex
 import Control.Monad
