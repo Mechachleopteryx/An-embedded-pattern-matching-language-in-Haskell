@@ -518,14 +518,14 @@ The `r` is the type of the final result from our lexical analyzer. It can be ret
 
 ## Network streams
 
-Instead of `stream`, a more generic stream-reading function `stream0` is provided to work with any stream of an instance of `Stream` class. By defining a proper `getc` for a custom stream, we can use it with `stream0`.
+Instead of `stream`, a more generic stream-reading function `stream0` is provided to work with any stream of an instance of `Stream` class, which is very simple because it is not assumed to be recoverable. And, by defining a proper `getc` method for a custom stream, we can use it with `stream0`.
 ```haskell
 class Stream s m r c | s -> r c where -- needs FunctionalDependencies
     getc :: s -> m (Either r (c, s))
     -- getc will return either r in case of an error in the stream, or (c, s) otherwise.
 ```
 
-For example, we can make an example server program that outputs the string as is on the console, only converting "a"s into "A"s.
+For example, we can make an example server program that outputs the string as is on the console, only converting every "a" into capitalized "A".
 ```haskell
 {-# LANGUAGE QuasiQuotes, MultiParamTypeClasses #-}
 import Parser
@@ -552,7 +552,7 @@ main = withSocketsDo $ do  -- in the IO monad
     stream0 handle
         $$ yyLex putStr
         $$ rules [
-            rule [regex|a|] $ \s -> yyAccept "A",  -- convert each "a" into "A".
+            rule [regex|a|] $ \s -> yyAccept "A",  -- convert every "a" into "A".
             rule [regex|.|] $ \s -> yyAccept s     -- leave it intact, otherwise.
             ]
 
@@ -560,13 +560,12 @@ main = withSocketsDo $ do  -- in the IO monad
     putStrLn "Server closed."
 ```
 
-When we run the above program and run some client program, we will get:
+When we run the above program and run some client program, we will get things like:
 ```
-[~/haskell]nc localhost 3001
+$ nc localhost 3001
 abaccab
 
 *Main> main
 Starting server ...
 AbAccAb
-Server closed.
 ```
