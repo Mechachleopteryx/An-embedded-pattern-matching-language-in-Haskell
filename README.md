@@ -354,7 +354,7 @@ main =
 
 #### Actions are executed from top to bottom, but selectively.
 
-`rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
+The `rule` combines a quasi-quoted regular expression and a user-defined action into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. Every action has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
 ```haskell
 data ActionResult r a
     = Return r  -- to finish the lexical analyzer immediately with value "r"
@@ -371,7 +371,7 @@ yyReject :: Monad m => m (ActionResult r a)
 yyReject = return Reject
 ```
 
-However, unlike patterns that are tried to match constantly and simultaneously, not all matched actions (that is, actions with the corresponding matched patterns) are executed always. As monads, actions are executed in the order of top-to-bottom, and each action is executed only if all its previous actions give it a way by returning `Reject`. In other words, if an action returns `Accept`, the actions below it are not executed. (Note, however, returning `Reject` or `Accept` affects only the execution of actions and has nothing to do with matching their patterns; all the patterns are tried matching always!)
+However, unlike patterns are tried to match constantly and simultaneously, not all matched actions (that is, actions with the corresponding matched patterns) are executed always. As monads, actions are executed in the order of top-to-bottom, and each action is executed only if all its previous actions give it a way by returning `Reject`. In other words, if an action returns `Accept`, the actions below it are not executed. (Note, however, returning `Reject` or `Accept` affects only the execution of actions, and has nothing to do with matching their patterns; all patterns are tried matching always!)
 ```haskell
 main :: IO ()
 main =
@@ -400,7 +400,7 @@ main =
 
 #### A pattern can pass multiple strings to the corresponding action in a match.
 
-The last example above can be rewritten with a single pattern as follows. As the `[regex|he|she|]` pattern can match "he" and "she" when reading "she" from the input stream, it passes both of them in a list over to its action, and the action is then called for each of them. And in this case, we cannot control the multiple executions of the same action with `Accept` or `Reject`, as they only affect the execution of actions below.
+The last example above can be rewritten with a single pattern as follows. As the `[regex|he|she|]` pattern can match "he" and "she" at the same time when reading 'e' from the input, "she", it passes both of them in a list over to its action, and the action is then called for each of them. And in this case, we cannot control the multiple executions of the same action with `Accept` or `Reject`, as they only affect the execution of actions that come below.
 ```haskell
 main :: IO ()
 main =
@@ -414,7 +414,46 @@ main =
 -- she
 ```
 
-Be careful when using quantification operators, rtlex will return all the possible (sub-)strings matched.
+Be careful when using quantification operators, `"*"` and `"+"`, that rtlex will return all the possible (sub-)strings matched.
+```haskell
+main :: IO ()
+main =
+    stream () "aaa"
+    $$ yyLex (const $ return ())
+    $$ rules [
+        rule [regex|a*|] $ \s -> do putStrLn s; yyAccept ()
+    ]
+-- *Main> main
+-- a
+-- a
+-- aa
+-- a
+-- aa
+-- aaa
+```
+The results from the example above may look redundant, but if we think of the input string as <code>"a<sub>1</sub>a<sub>2</sub>a<sub>3</sub>"</code> they correspond to:
+<pre>a<sub>1</sub>
+a<sub>2</sub>
+a<sub>1</sub>a<sub>2</sub>
+a<sub>3</sub>
+a<sub>2</sub>a<sub>3</sub>
+a<sub>1</sub>a<sub>2</sub>a<sub>3</sub></pre>
+
+Then, we might have a question, if an action is called multiple times for each matched string by the corresponding pattern, and if the action returns `Accept` for some of the strings and `Reject` for others, how does it affect the action that follows it?
+```haskell
+main :: IO ()
+main =
+    stream () "abc"
+    $$ yyLex (\s -> putStrLn s)
+    $$ rules [
+        rule [regex|ab|b|] $ \s -> if s == "b" then yyAccept s else yyReject,
+        rule [regex|c|]    $ \s -> yyAccept s
+    ]
+-- *Main> main
+-- b
+-- c
+```
+As we can see from the above code, 
 
 
 - `yyReturn` is used for exiting from the lexical analyzer immediately and returning a value of type `r` as a result, which can be also returned from `stream` when the end of stream is reached.
@@ -427,15 +466,6 @@ Every 1.possible (instead of longest) 2.submatch
 So, patterns are 3.always matched whether or not the corresponding actions are executed.
 
 matched actions (that is, actions corresponding to the matched patterns) are executed from top to bottom, only the 1st one is usually executed unless it ends with yyReject.
-
-`[regex|a*|]` with "aaaa"
-a1
-a2
-a1a2
-a3
-a2a3
-a1a2a3
-...
 
 Finally, `yacc` is called for each action that ends with yyAccept, and is given the result of each action as its argument.
 
