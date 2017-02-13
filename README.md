@@ -394,7 +394,7 @@ yyReject :: Monad m => m (ActionResult r a)
 yyReject = return Reject
 ```
 
-However, unlike patterns are tried to match constantly and simultaneously, not all matched actions (that is, actions with the corresponding matched patterns) are executed always. As monads, actions are executed in the order of top-to-bottom, and each action is executed only if all its previous actions give it a way by returning `Reject`. In other words, if an action returns `Accept`, the actions below it are not executed. (Note, however, returning `Reject` or `Accept` affects only the execution of actions, and has nothing to do with matching their patterns; all patterns are tried matching always!)
+However, unlike patterns are tried to match constantly and simultaneously, not all matched actions (that is, actions associated with matched patterns) are executed always. As monads, actions are executed in the order of top-to-bottom, and each action is executed only if all its previous actions give it a way by returning `Reject`. In other words, if an action returns `Accept`, the actions below it are not executed. (Note, however, returning `Reject` or `Accept` affects only the execution of actions, and has nothing to do with matching patterns; all patterns are tried matching always!)
 ```haskell
 main :: IO ()
 main =
@@ -423,7 +423,7 @@ main =
 
 #### A pattern can pass multiple strings to the corresponding action in a match.
 
-The last example above can be rewritten with a single pattern as follows. As the `[regex|he|she|]` pattern can match "he" and "she" at the same time when reading 'e' from the input, "she", it passes both of them in a list over to its action, and the action is then called for each of them. And in this case, we cannot control the multiple executions of the same action with `Accept` or `Reject`, as they only affect the execution of actions that come below.
+The last example above can be rewritten with a single pattern as follows. As the `[regex|he|she|]` pattern can match "he" and "she" at the same time when reading 'e' from the input string, "she", it passes both of them over to its action, calling the action with each of them as the argument. And in this case, we cannot control the multiple executions of the same action using `Accept` or `Reject`, as they only affect the execution of actions that come below.
 ```haskell
 main :: IO ()
 main =
