@@ -105,6 +105,8 @@ ha
 [("ha",3),("hi",1),("ho",2)]
 ```
 
+The network-stream version of this code is introduced at the *???* section.
+
 ## About general form
 
 Rtlex has the following general form.
