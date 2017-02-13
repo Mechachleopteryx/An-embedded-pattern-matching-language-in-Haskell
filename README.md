@@ -198,7 +198,7 @@ ParseTerm    = <a character>
     -- island
     ```
 
-    Note, unlike the case with `[regex|foo|bar|]` that has no occurrences of matching both "foo" and "bar", `[regex|land|island|]` matches both alternatives at the moment it reads the character `"d"` from input, and in this case, the corresponding action is executed twice for each matched string. Also note that in such a case with `"|"` operator, we have no way of executing the action for one alternative over another. Whereas if we write the alternatives in separate rules we can choose one of the corresponding actions by using `yyAccept`.
+    Note, unlike the case with `[regex|foo|bar|]` that has no occurrences of matching both "foo" and "bar", `[regex|land|island|]` matches both alternatives at the moment it reads the character 'd' from input, and in this case, the corresponding action is executed for each matched string. Also note that in such a case with `"|"` operator, we have no way of executing the action for one alternative over another. Whereas if we write the alternatives in separate rules we can choose one of the corresponding actions by using `yyAccept` (See the details [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules)).
     ```haskell
     main :: IO ()
     main =
