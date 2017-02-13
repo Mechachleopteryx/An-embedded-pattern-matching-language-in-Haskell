@@ -394,7 +394,7 @@ yyReject :: Monad m => m (ActionResult r a)
 yyReject = return Reject
 ```
 
-However, unlike patterns are tried to match constantly and simultaneously, not all matched actions (that is, actions associated with matched patterns) are executed always. As monads, actions are executed in the order of top-to-bottom, and each action is executed only if all its previous actions give it a way by returning `Reject`. In other words, if an action returns `Accept`, the actions below it are not executed. (Note, however, returning `Reject` or `Accept` affects only the execution of actions, and has nothing to do with matching patterns; all patterns are tried matching always!)
+However, unlike patterns are tried to match constantly and simultaneously, not all matched actions (that is, actions associated with matched patterns) are executed always. As monads, actions are executed in the order of top-to-bottom, and each action is executed only if its all previous actions give it a way by returning `Reject`. In other words, if an action returns `Accept`, the actions below it are not executed. (Note, however, returning `Reject` or `Accept` affects only the execution of actions, and has nothing to do with matching patterns; all patterns are tried matching always!)
 ```haskell
 main :: IO ()
 main =
@@ -437,7 +437,7 @@ main =
 -- she
 ```
 
-Be careful when using quantification operators, `"*"` and `"+"`, that rtlex will return all the possible (sub-)strings matched.
+Be careful when using quantification operators, `"*"` and `"+"`, that rtlex will match all the possible (sub-)strings.
 ```haskell
 main :: IO ()
 main =
