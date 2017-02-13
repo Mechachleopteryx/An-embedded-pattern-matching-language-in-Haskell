@@ -246,9 +246,9 @@ ParseTerm    = <a character>
 
 - `"*"` (*Kleene closure*), `"+"` (*positive closure*), and `"?"` (*options*): `[regex|α*|]` matches α zero or more times, `[regex|α+|]` matches α one or more times, and `[regex|α?|]` matches α zero or one time, that is, matches α once but optionally.
 
-- `"${var}"` and `"${}"` (*reference to other regular expression*): A regular expression can contain references to other regular expressions and its own regular expression as well. `"${}"` represents the whole regular expression that is currently being defined, and it is used to make a self-recursive regular expression. `"${var}"` embeds a reference to other regular expression through a variable name. `"${var}"` actually can take on any Haskell expression that leads to a regular expression.
+- `"${var}"` and `"${}"` (*reference to other regular expression*): A regular expression can contain references to other regular expressions and its own regular expression as well. `"${}"` represents the whole regular expression that is currently being defined, and it is used to make a self-recursive regular expression. `"${var}"` embeds a reference to other regular expression through a variable name. However, `"${var}"` actually can take on any Haskell expression that leads to a regular expression.
 
-    We can recognize a regular language of {a^n b^n | n >= 0} using the expression, `"X = (aXb)?"`, which cannot be described with the ordinary (non-recursive) regular expressions, but only with the context-free grammar.
+    We can specify a regular language of {a^n b^n | n >= 0} using the expression, `"X = (aXb)?"`, which cannot be described with the ordinary (non-recursive) regular expressions.
     ```haskell
     main :: IO ()
     main =
@@ -267,7 +267,7 @@ ParseTerm    = <a character>
     -- aabb
     ```
 
-    Using a function returning regular expressions, we can even make a more powerful expression that recognizes {a^n b^n c^n | n >= 1}, which is known that it cannot be described by the context-free grammar.
+    Using a function returning a regular expression, we can even make a more powerful expression that recognizes {a^n b^n c^n | n >= 1}, which is known that it cannot be described by the context-free grammar.
     ```haskell
     main :: IO ()
     main =
