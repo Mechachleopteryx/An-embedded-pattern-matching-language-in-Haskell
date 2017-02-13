@@ -513,10 +513,8 @@ gather =  -- in the IO monad
 ```
 
 #### About `r`
-The `r` is the type of the final result from our lexical analyzer. It can be returned by either `stream` or an action. `stream` returns an `r` when it has reached the end of its stream. An action can use `yyReturn` to return an `r`, making our lexical analyzer stop immediately. If our lexical analyzer needs to keep running to the end of a stream, chances are we don't it in any actions unless there is an exceptional case in the stream. But, if we expect our lexical analyzer to exit early when encountering a certain pattern in the stream, we can make use of it.
 
-?? Every 1.possible (instead of longest) 2.submatch
-?? So, patterns are 3.always matched whether or not the corresponding actions are executed.
+The `r` is the type of the final result from our lexical analyzer. It can be returned by either `stream` or an action. `stream` returns an `r` when it has reached the end of its stream. An action can use `yyReturn` to return an `r`, making our lexical analyzer stop immediately. If our lexical analyzer needs to keep running to the end of a stream, chances are we don't need to `yyReturn` it in any action unless there is an exceptional case in the stream. But, if we expect our lexical analyzer to exit early when encountering a certain pattern in the stream, we can make use of it.
 
 ## Network streams
 
@@ -527,7 +525,7 @@ class Stream s m r c | s -> r c where -- needs FunctionalDependencies
     -- getc will return either r in case of an error in the stream, or (c, s) otherwise.
 ```
 
-For example, we can make an example server program that outputs the string received from client as is on the console, only converting every "a" into capitalized "A".
+For example, we can make an example server program that was introduced earlier to count occurrences of some words.
 ```haskell
 {-# LANGUAGE QuasiQuotes, FlexibleInstances, MultiParamTypeClasses #-}
 
