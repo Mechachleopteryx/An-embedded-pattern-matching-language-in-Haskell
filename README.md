@@ -130,7 +130,7 @@ analyzer =
         ]
 ```
 
-- `QuasiQuotes` language extension is for specifying regular expressions within `[regex|...|]`. And regular expressions are compiled (that is, encoded into regular expression ASTs) at compile-time. So, if there is an error in a regular expression, it will be reported at compile-time. The syntax and semantics for regular expressions are described below.
+- `QuasiQuotes` language extension is for specifying regular expressions within `[regex|...|]`. And regular expressions are compiled (that is, encoded into regular expression ASTs) at the compile-time of source code. So, if there is an error in a regular expression, it will be reported at compile-time. The syntax and semantics for regular expressions are described below.
 
 - `import Parser` imports the `[regex|...|]` quasi quoter and the regular expression engine.
 
