@@ -144,7 +144,7 @@ analyzer =
 
 - `rules` introduces rules in a list. As such, each rule in the list must be separated with a comma, "`,`".
 
-- `rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. (More details about the matching algorithm are explained below.) Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
+- `rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. (More details about the matching algorithm are explained [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
     ```haskell
     data ActionResult r a
         = Return r  -- to finish the lexical analyzer immediately with value "r"
