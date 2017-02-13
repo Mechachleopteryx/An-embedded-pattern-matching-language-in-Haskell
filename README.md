@@ -213,7 +213,7 @@ ParseTerm    = <a character>
     -- island
     ```
 
-- `"&"` (*and*): `[regex|α&β|]` matches a string that is matched with both α and β *at the same time*. So, `[regex|foo.\*&.\*bar|]` matches a string from input that starts with "foo" and ends with "bar".
+- `"&"` (*and*): `[regex|α&β|]` matches a string that is matched with both α and β *at the same time*. So, `[regex|foo.*&.*bar|]` matches a string from input that starts with "foo" and ends with "bar".
 
     Among words separated by spaces, if we want to choose the words that contain a number, we can use:
     ```haskell
