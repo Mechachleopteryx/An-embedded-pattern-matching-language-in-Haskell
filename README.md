@@ -337,7 +337,7 @@ main =
         rule [regex|abac|] $ \s -> do putStrLn s; yyAccept ()
     ]
 -- *Main> main
--- abc
+-- abac
 ```
 
 In the code below, rtlex considers the two patterns simultaneously while reading "ab" from input.
@@ -354,7 +354,7 @@ main =
 -- abd
 ```
 
-Using the nature of finding "every possible submatches", we can detect the start and the end of a pattern in real-time when the pattern matches repeatedly and consecutively.
+Using the nature of finding "every possible submatch", we can detect the start and the end of a pattern in real-time when the pattern occurs consecutively.
 ```haskell
 main :: IO ()
 main =
