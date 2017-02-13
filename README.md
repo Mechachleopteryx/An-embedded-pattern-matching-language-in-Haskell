@@ -481,15 +481,15 @@ In the above example, at the moment the character 'b' is reached, the first patt
 
 So, we can just think that an action is called for each match regardless of whether the matches occur at the same time in a pattern or not.
 
-#### `yyLex` is also called for each match, but with some other value than the matched string.
+#### `yyLex` is also called for each match, but with some user-determined value than the matched string.
 
-The `yyLex` is called whenever a matched action returns something using `yyAccept`, and then `yyLex` calls the `yacc` that is specified as the argument and feeds the returned result from the action to `yacc`. So, whenever there is a match, a corresponding action is called and then `yacc` is called as well. But, whereas action is given the matched string as its argument, `yacc` is given the result that is returned by such an action. In a sense, we can think of actions as converters from String into a value of a user-determined type `a`.
+The `yyLex` is called whenever a matched action returns something with `yyAccept`, and then `yyLex` calls the `yacc` that is specified as its argument and feeds the returned result from the action to `yacc`. So, whenever there is a match, a corresponding action is called and then `yacc` is also called. But, whereas action is given the matched string as its argument, `yacc` is given the result that is returned by such an action. In a sense, we can think of actions as converters from String into a value of a user-determined type `a`.
 ```
 action :: String -> m (ActionResult r a)
 yacc   :: a -> m b
 ```
 
-The `yacc` returns `m b`, a value wrapped in a user-determined monad `m`. However, since `yacc` is called each time there is a match from a pattern, and since it is not called at once with all the matches together, the intermediate results of `m b` cannot be used outside of `yacc`, and they are simply ignored (actually, reserved for future use) when outside of `yacc`. That's actually what `yacc` is for. If we want to process the result from an action each time a pattern matches, we put the procedure into `yacc`. However, if we want the results from actions at once at the end of lexical analysis, we need to gather those results using some monad.
+The `yacc` returns `m b`, a value wrapped in a user-determined monad `m`. However, since `yacc` is called each time there is a match from a pattern, and since it is not called at once with all the matches together, the intermediate results of `m b` cannot be used outside of `yacc`, and they are simply ignored (actually, reserved for future use) outside of `yacc`. That's actually what `yacc` is for. If we want to process the result from an action each time a pattern matches, we put the procedure into `yacc`. However, if we want the results from actions at once at the end of lexical analysis, we need to gather those results using some monad.
 ```haskell
 import Control.Monad.State
 
