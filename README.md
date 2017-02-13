@@ -134,7 +134,7 @@ analyzer =
 
 - `import Parser` imports the `[regex|...|]` quasi quoter and the regular expression engine.
 
-- `import Rtlex` imports: `stream`, `yyLex`, `rules`, `($$)`, `rule`, `yyReturn`, `yyAccept`, and `yyReject`.
+- `import Rtlex` imports: `Stream`, `stream`, `stream0`, `yyLex`, `rules`, `($$)`, `rule`, `yyReturn`, `yyAccept`, and `yyReject`.
 
 - The `analyzer` consists of three sections, `stream`, `yyLex`, and `rules`, separated by `$$` operator. Each section is actually implemented as a [coroutine](https://en.wikipedia.org/wiki/Coroutine) that interacts with each other internally using yield (and resume), and the `$$` operator plays the role of binding those coroutines. The middle coroutine `yyLex` acts as a proxy between the upper and the lower coroutines, and reads each input character from the input stream and passes it to `rules`. The `rules` tries to match each rule in its rules list with the given character, runs actions that correspond to successfully matched patterns, and reports the results from such actions to `yyLex` one by one. Then with each result from `rules`, `yyLex` calls `yacc` that is present as its argument, before `yyLex` repeats the next cycle of reading another character from the stream and so on.
 
@@ -556,9 +556,11 @@ main = withSocketsDo $ do  -- in the IO monad
 
     m <- flip execStateT Map.empty $
          stream0 handle
+
          $$ yyLex (\s -> do  -- in the "StateT (Map String Int) IO" monad
             modify $ Map.insertWith (+) s 1  -- stores occurrences of each word in a Map
             lift $ putStrLn s)               -- and prints each word as well.
+
          $$ rules [
             rule [regex|ha|ho|hi|] $ \s -> yyAccept s  -- reports each word to the yyLex.
             ]
