@@ -437,7 +437,7 @@ main =
 -- she
 ```
 
-Be careful when using quantification operators, `"*"` and `"+"`, that rtlex will match all the possible (sub-)strings.
+Be careful when using quantification operators, `"*"` and `"+"`, that rtlex will match all the possible (sub-)strings from input stream.
 ```haskell
 main :: IO ()
 main =
@@ -462,7 +462,7 @@ a<sub>3</sub>
 a<sub>2</sub>a<sub>3</sub>
 a<sub>1</sub>a<sub>2</sub>a<sub>3</sub></pre>
 
-Then, we might have a question, if an action is called multiple times in a match, for each matched string by the corresponding pattern, and if the action returns `Accept` for some of the strings and `Reject` for others, how does it affect the action that follows it? The answer is that the action behaves the same when it is called separately for different matches from its pattern, so we do not need to consider this case specially.
+Then, we might have a question, if an action is called multiple times in a match, for each matched string by the corresponding pattern, and if the action returns `Accept` for some of the strings and `Reject` for others, how does it affect the action that follows it? The answer is that the action behaves just the same when it is called separately for different matches from its pattern, so we do not need to consider this case specially.
 ```haskell
 import Data.Char (toUpper)
 main :: IO ()
