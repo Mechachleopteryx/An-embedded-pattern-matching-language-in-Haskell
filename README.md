@@ -527,18 +527,20 @@ class Stream s m r c | s -> r c where -- needs FunctionalDependencies
 
 For example, we can make an example server program that outputs the string received from client as is on the console, only converting every "a" into capitalized "A".
 ```haskell
-{-# LANGUAGE QuasiQuotes, MultiParamTypeClasses #-}
+{-# LANGUAGE QuasiQuotes, FlexibleInstances, MultiParamTypeClasses #-}
 
 import Parser
 import Rtlex
-import Control.Monad
+import Control.Monad.State
+import qualified Data.Map as Map
 import Network
 import System.IO
 import System.IO.Error
 
 -- Handle from IO monad as a Stream instance
-instance Stream Handle IO Int Char where  -- needs MultiParamTypeClasses
-    getc handle =
+instance MonadIO m => Stream Handle m Int Char where
+    -- needs FlexibleInstances, MultiParamTypeClasses
+    getc handle = liftIO $
         catchIOError
         (do c <- hGetChar handle; return $ Right (c, handle))
         (\e -> return $ Left $ if isEOFError e then 0 else -1)
@@ -550,23 +552,34 @@ main = withSocketsDo $ do  -- in the IO monad
     putStrLn "Starting server ..."
     (handle, host, port) <- accept sock
 
-    stream0 handle
-        $$ yyLex putStr
-        $$ rules [
-            rule [regex|a|] $ \s -> yyAccept "A",  -- convert every "a" into "A".
-            rule [regex|.|] $ \s -> yyAccept s     -- leave it intact, otherwise.
+    m <- flip execStateT Map.empty $
+         stream0 handle
+         $$ yyLex (\s -> do  -- in the "StateT (Map String Int) IO" monad
+            modify $ Map.insertWith (+) s 1
+            lift $ putStrLn s)
+         $$ rules [
+            rule [regex|ha|ho|hi|] $ \s -> yyAccept s
             ]
 
     hClose handle
+    print $ Map.toList m
     putStrLn "Server closed."
 ```
 
 When we run the above program and run some client program, we will get things like:
 ```
 $ nc localhost 3001
-abaccab
+ha ha ho hoo hi ha
+^D
 
 *Main> main
 Starting server ...
-AbAccAb
+ha
+ha
+ho
+ho
+hi
+ha
+[("ha",3),("hi",1),("ho",2)]
+Server closed.
 ```
