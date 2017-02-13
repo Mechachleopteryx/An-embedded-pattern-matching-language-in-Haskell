@@ -321,6 +321,8 @@ ParseTerm    = <a character>
 
 - `"(...)"`: Regular expressions can be grouped in parentheses to limit the scope of operators. The empty parentheses `"()"` represents ε that matches an empty string. So, `"α?"` is an equivalent expression to `"α|()"`.
 
+- For optimal code generation, zero-width assertions (`"{fun}"`) and ε pattern (`"()"`) are supported only when the `"-DZERO_WIDTH_ASSERTION"` [macro](https://downloads.haskell.org/~ghc/7.8.2/docs/html/users_guide/options-phases.html#c-pre-processor) is defined in `ghc` or `ghci`.
+
 ## Details about matching rules
 
 #### Every possible submatch rather than the earliest and the longest submatch
