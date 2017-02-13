@@ -105,7 +105,7 @@ ha
 [("ha",3),("hi",1),("ho",2)]
 ```
 
-The network-stream version of this code is introduced at the [**Network streams** section](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#network-streams).
+The network-stream version of this code is introduced at the [**Network streams**](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#network-streams) section near the end of this document.
 
 ## About general form
 
