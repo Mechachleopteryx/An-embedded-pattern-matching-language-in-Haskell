@@ -105,7 +105,7 @@ ha
 [("ha",3),("hi",1),("ho",2)]
 ```
 
-The network-stream version of this code is introduced at the *???* section.
+The network-stream version of this code is introduced at the [**Network streams** section](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#network-streams).
 
 ## About general form
 
@@ -557,14 +557,14 @@ main = withSocketsDo $ do  -- in the IO monad
     m <- flip execStateT Map.empty $
          stream0 handle
          $$ yyLex (\s -> do  -- in the "StateT (Map String Int) IO" monad
-            modify $ Map.insertWith (+) s 1
-            lift $ putStrLn s)
+            modify $ Map.insertWith (+) s 1  -- stores occurrences of each word in a Map
+            lift $ putStrLn s)               -- and prints each word as well.
          $$ rules [
-            rule [regex|ha|ho|hi|] $ \s -> yyAccept s
+            rule [regex|ha|ho|hi|] $ \s -> yyAccept s  -- reports each word to the yyLex.
             ]
 
     hClose handle
-    print $ Map.toList m
+    print $ Map.toList m  -- finally prints the counts in the Map.
     putStrLn "Server closed."
 ```
 
