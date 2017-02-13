@@ -317,7 +317,7 @@ ParseTerm    = <a character>
     -- SHE
     ```
 
-    Note that unlike the `yacc` function and `action` functions, assertion functions do not run under the user-specified monad. So, they cannot interact with each other, nor with `yacc` or `action` functions.
+    Note that unlike the `yacc` function and `action` functions, assertion functions are pure and do not run under the user-specified monad. So, they cannot interact with each other, nor with `yacc` or `action` functions.
 
 - `"(...)"`: Regular expressions can be grouped in parentheses to limit the scope of operators. The empty parentheses `"()"` represents ε that matches an empty string. So, `"α?"` is an equivalent expression to `"α|()"`.
 
