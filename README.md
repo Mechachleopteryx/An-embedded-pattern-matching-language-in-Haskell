@@ -81,13 +81,13 @@ and if we give it the input, "helloworld", it will not execute either action unt
 completely read the whole input string, and then it will execute only the first action. 
 At the moment it reads the first 'o' from "helloworld", it knows that the second pattern 
 does match, but it does not execute the second action immediately, because it wants to 
-try to match other patterns with more input characters as longer as possible. And when it 
-finally knows the first pattern does match the whole input string, it executes the first 
-action, ignoring the second action. What if we give it the input, "helloworks"? This 
-time, the second action will be executed as expected, but will be executed only when it 
-reads the character 'k', which is the first clue of no success of matching with the first 
-pattern. That means, depending on other patterns, the action corresponding to a matched 
-pattern may not be executed immediately.
+try to match other patterns with more input characters as many as possible. And when it 
+finally knows the first pattern does match the whole input string, it then executes the 
+first action, ignoring the second action. What if we give it the input, "helloworks"? 
+This time, the second action will be executed as expected, but it will be executed only 
+when it reads the character 'k' from "helloworks", which is the first clue of no 
+successful matching with the first pattern. That means, depending on other patterns, the 
+action corresponding to a matched pattern may not be executed immediately.
 
 Note that most lexical analyzers (including the `flex`) are not so "smart" enough to match multiple patterns simultanenously, and when they get to know the first pattern does not match "helloworks" at the character 'k' they simply backtracks and try to match the second pattern back from the start of the input. (In fact, if they are to be "smart", they need to include actions into their associated regular expressions (regular expression ASTs, to be accurate) and then combine all those regular expressions across rules into a single regular expression, before starting to match them.)
 
