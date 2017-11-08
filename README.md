@@ -1,5 +1,4 @@
-# Rtlex: an embedded pattern-matching language in Haskell based on Glushkov's 
-regex-matching algorithm
+# Rtlex: an embedded pattern-matching language in Haskell based on Glushkov's regex-matching algorithm
 
 **Rtlex** (Real-time [Lexical 
 Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a 
