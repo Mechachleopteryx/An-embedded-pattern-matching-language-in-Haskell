@@ -7,7 +7,7 @@ real-time stream) in Haskell. It is basically similar to the legacy lexical anal
 generator such as `flex` in the syntax and the semantics; it executes a monadic action 
 (that is, an action possibly having a side-effect) whenever a pattern among many 
 specified patterns matches some text from the input stream. However, it differs in that 
-it deals with real-time stream rather than a already saved file, it codes the lexical 
+it deals with real-time stream rather than an already saved file, it codes the lexical 
 analyzer specification directly in Haskell's template language, and it extends the 
 pattern so that we can embed Haskell code running on match time in it. To effectly work 
 on a real-time stream, its pattern-matching engine is implemented on the basis of the 
@@ -27,7 +27,7 @@ and arbitrary (in-line) Haskell functions in it. We can use embedded variables t
 as ordinary Haskell variables or we can use them to interpolate other regular expressions 
 into a regular expression. With them, we can even interpolate a regular expression into 
 itself to generate a recursive pattern. Moreover, we can embed a Haskell function into a 
-regular expression to dynamically interpolate another regular expression, which is quite 
+regular expression to dynamically interpolate a regular expression, which is quite 
 similar to `(??{code})` in Perl.
 
 We can use the embedded function as a [zero-width 
@@ -53,10 +53,13 @@ with some user state type `u`.
 
 ## Why to analyze in real-time?
 
-Legacy lexical analyzer like [`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)) is based on finding *the earliest and the longest submatch* and so tries to match its patterns in such a way that:
-- it tries to match its patterns from top to bottom and one by one (or simultaneously if it is "smart" enough),
-- if it finds a pattern matches a string that it has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries other patterns (including the currently matched pattern as well) for any possible longer matches, and
-- if there are no more patterns that successfully match as it reads characters from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for further input.
+Legacy lexical analyzer like 
+[`flex`](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)) basically finds 
+*the earliest and the longest submatch* and so tries to match its patterns in such a way 
+that:
+- It tries to match its patterns from top to bottom and one by one (or simultaneously if it is "smart" enough),
+- If it finds a pattern matches a string that it has read so far from input, it memorizes the matched pattern and the position of input, and then it repeatedly tries other patterns (including the currently matched pattern as well) for any possible longer matches, and
+- If there are no more patterns that successfully match as it reads characters from input, it finally declares a match with the last pattern that has been remembered to match successfully, and recovers the input to the position corresponding to the last match, to continue the next lexical analysis for further input.
 
 For example, if a legacy lexical analyzer has the following two rules,
 ```
