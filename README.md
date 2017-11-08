@@ -1,4 +1,4 @@
-# A real-time lexical analyzer in Haskell over network stream
+# An embedded pattern-matching language in Haskell based on Glushkov's regex-matching algorithm
 
 **Rtlex** (Real-time [Lexical Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a lexical scanner over network stream (or any kind of real-time streams) that executes a monadic action whenever a pattern matches some text from the stream. To work on real-time streams, it is implemented on the basis of a very efficient [NFA](https://msdn.microsoft.com/en-us/library/e347654k(v=vs.110).aspx) algorithm that can keep matching multiple patterns simultaneously and without [backtracking](https://msdn.microsoft.com/en-us/library/dsy130b4(v=vs.110).aspx), and as such, does not rely on the stream being recoverable (or bufferable) by using things like [`unget()`](http://www.cplusplus.com/reference/istream/istream/unget/).
 
