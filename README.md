@@ -60,10 +60,12 @@ way that:
 - It tries to match its patterns from top to bottom and one by one (or simultaneously if 
   it is "smart" enough),
 - If it finds a pattern to match a string up to some point as it reads from the input, it 
-  memorizes the pattern and the current point of the ending-match in the input, and then 
-  it continues to try other patterns (and the currently matched pattern as well) 
-  repeatedly for finding any possible longer matches as it reads more characters from the 
-  input, and
+  memorizes the pattern and the current point of the ending-match in the input, but it 
+  continues to try other patterns (and the currently matched pattern as well) for finding 
+  any possible longer matches as reading more characters from the input. If it finds a 
+  longer match it forgets about the previous pattern and its point of match and it 
+  memorizes the new matching pattern and the new point of match in the input, and does 
+  this repeatedly.
 - If it finally finds no more patterns to match successfully as it reads more characters 
   from input, it declares a match with the last pattern that has been remembered to match 
   successfully, and recovers the input to the position corresponding to the last match, 
