@@ -3,8 +3,8 @@
 **Rtlex** (Real-time [Lexical 
 Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a 
 tool for generating real-time lexical analyzer over network stream (or any kind of 
-real-time streams) in Haskell. It is similar to the legacy lexical analyzer generator 
-such as `flex` in the syntax and the semantics; it executes a monadic action (that is, an 
+real-time stream) in Haskell. It is similar to the legacy lexical analyzer generator such 
+as `flex` in the syntax and the semantics; it executes a monadic action (that is, an 
 action possibly having a side-effect) whenever a pattern among many specified patterns 
 matches some text from the input stream. However, it differs in that it deals with 
 real-time stream rather than a saved file, it codes the lexical analyzer specification 
@@ -21,28 +21,30 @@ Rtlex uses (self- and mutual- as well) [recursive regular
 expressions](http://www.regular-expressions.info/recurse.html) for specifying patterns to 
 match with, which are easier to write and are better to fit in a lexical analyzer than 
 the [context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar), as we 
-will see later. It extends its regular expression so that we can embed Haskell variables 
+will see below. It extends its regular expression so that we can embed Haskell variables 
 and arbitrary (in-line) Haskell functions in it. We can use embedded variables the same 
-as ordinary Haskell variables or we can use them to interpolate another regular 
-expression into a regular expression. With them, we can even interpolate a regular 
-expression into itself to generate a recursive pattern. Moreover, we can embed a Haskell 
-function into a regular expression to interpolate another regular expression dynamically, 
-which is quite similar to `(??{ code })` in Perl.
+as ordinary Haskell variables or we can use them to interpolate other regular expressions 
+into a regular expression. With them, we can even interpolate a regular expression into 
+itself to generate a recursive pattern. Moreover, we can embed a Haskell function into a 
+regular expression to interpolate another regular expression dynamically, which is quite 
+similar to `(??{code})` in Perl.
 
 We can use the embedded function as a [zero-width 
 assertion](http://www.regular-expressions.info/lookaround.html) that determines the 
 success or failure of its match on match time, based on the (sub-)string that has been 
-partially matched up to the position of the zero-width assertion. Embedded functions are 
-also used to convert the partially matched (sub-)string into another string, while 
-matching a regular expression. Regular expressions in rtlex are specified as wrapped in 
-[*quasi quotes*](https://wiki.haskell.org/Quasiquotation) and so compiled at the 
-compilation time of the lexical analyzer itself.
+partially matched so far up to the position of the zero-width assertion. The embedded 
+function is also used to convert the partially matched (sub-)string into another string, 
+while matching the regular expression. Regular expressions in rtlex are specified as 
+wrapped in [*quasi quotes*](https://wiki.haskell.org/Quasiquotation) and thus compiled at 
+the compilation time of the lexical analyzer itself. That is, we don't need second 
+compilation to compile it into a Haskell or C code, which is the usual process follwed by 
+the legacy lexer.
 
 Actions that will run when their associated patterns are matched are ordinary Haskell 
 monadic functions under any user-specified monad such as `IO`. They are given, as an 
-argument, the input string matched by the associated patterns. As all actions share the 
-same monad, they can communicate with each other through the monad; we can use, for 
-example, simple mutable reference like 
+argument, the input string matched by the associated patterns for looking it up. As all 
+actions share the same monad, they can communicate with each other through the monad, and 
+we can use, for example, simple mutable reference like 
 [`IORef`](https://hackage.haskell.org/package/base-4.9.1.0/docs/Data-IORef.html), or a 
 transformed monad like [`StateT u 
 IO`](https://hackage.haskell.org/package/transformers-0.5.2.0/docs/Control-Monad-Trans-State-Lazy.html) 
