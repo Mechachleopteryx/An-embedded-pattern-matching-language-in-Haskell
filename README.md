@@ -10,9 +10,9 @@ matches some text from the input stream. However, it differs in that it deals wi
 real-time stream rather than a saved file, it codes the lexical analyzer specification 
 directly in Haskell's template language, and it extends the pattern so that we can embed 
 match-time Haskell code in it. To effectly work on a real-time stream, its 
-pattern-matching engine is implemented on the basis of a very efficient 
-[NFA](https://msdn.microsoft.com/en-us/library/e347654k(v=vs.110).aspx) algorithm that 
-can keep matching multiple patterns simultaneously and without 
+pattern-matching engine is implemented on the basis of the very efficient Glushkov's 
+[NFA](https://msdn.microsoft.com/en-us/library/e347654k(v=vs.110).aspx) matching 
+algorithm that can keep matching multiple patterns simultaneously and without 
 [backtracking](https://msdn.microsoft.com/en-us/library/dsy130b4(v=vs.110).aspx), and as 
 such, does not rely on the stream being recoverable (or bufferable) by using things like 
 [`unget()`](http://www.cplusplus.com/reference/istream/istream/unget/).
@@ -152,7 +152,7 @@ ha
 
 A network-stream version of this code is introduced at the [**Network streams**](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#network-streams) section near the end of this document.
 
-## About general form
+## Details about general form
 
 Rtlex has the following general form.
 ```haskell
