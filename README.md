@@ -1,8 +1,35 @@
-# An embedded pattern-matching language in Haskell based on Glushkov's regex-matching algorithm
+# A real-time lexical analyzer in Haskell over network stream
 
-**Rtlex** (Real-time [Lexical Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a lexical scanner over network stream (or any kind of real-time streams) that executes a monadic action on the fly when a pattern matches some text from the stream. To work on real-time streams, it is implemented on the basis of a very efficient [NFA](https://msdn.microsoft.com/en-us/library/e347654k(v=vs.110).aspx) algorithm that can keep matching multiple patterns simultaneously and without [backtracking](https://msdn.microsoft.com/en-us/library/dsy130b4(v=vs.110).aspx), and as such, does not rely on the stream being recoverable (or bufferable) by using things like [`unget()`](http://www.cplusplus.com/reference/istream/istream/unget/).
+**Rtlex** (Real-time [Lexical 
+Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a 
+lexical scanner over network stream (or any kind of real-time streams) that executes a 
+monadic action on the fly when a pattern matches some text from the stream. To work on 
+real-time streams effectively, it is implemented on the basis of a very efficient 
+[NFA](https://msdn.microsoft.com/en-us/library/e347654k(v=vs.110).aspx) algorithm that 
+can keep matching multiple patterns simultaneously and without 
+[backtracking](https://msdn.microsoft.com/en-us/library/dsy130b4(v=vs.110).aspx), and as 
+such, does not rely on the stream being recoverable (or bufferable) by using things like 
+[`unget()`](http://www.cplusplus.com/reference/istream/istream/unget/).
 
-Rtlex uses (self- and mutual- as well) [recursive regular expressions](http://www.regular-expressions.info/recurse.html) for specifying patterns to match, which are easier to write and better to fit in a lexical analyzer than the [context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar). Rtlex takes extended regular expressions into which we can embed Haskell variables and arbitrary (in-line) Haskell functions. An embedded variable can refer to other regular expressions as well as its own regular expression that contains it, and an embedded Haskell function can be used as a [zero-width assertion](http://www.regular-expressions.info/lookaround.html) that determines the success or failure of its match based on the (sub-)string that has been partially matched up to the position of the zero-width assertion in the regular expression. Embedded functions are also used to convert the partially matched (sub-)string into another string, in the middle of matching a regular expression. Regular expressions in rtlex are specified wrapped in [*quasi quotes*](https://wiki.haskell.org/Quasiquotation) and thus compiled at the compile-time of rtlex.
+Rtlex uses (self- and mutual- as well) [recursive regular 
+expressions](http://www.regular-expressions.info/recurse.html) for specifying patterns to 
+match, which are easier to write and better to fit in a lexical analyzer than the 
+[context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar), as we will 
+see later. Rtlex also extends the regular expression so that we can embed Haskell 
+variables and arbitrary (in-line) Haskell functions in it. We can use embedded variables 
+to interpolate another regular expression into a regular expression, or we can even 
+interpolate a regular expression into itself to generate a recursive pattern. Moreover, 
+we can embed a Haskell function into a regular expression to interpolate another regular 
+expression dynamically, which is quite similar to `(??{ code })` in Perl.
+
+We can use the embedded function as a [zero-width 
+assertion](http://www.regular-expressions.info/lookaround.html) that determines the 
+success or failure of its match on match time, based on the (sub-)string that has been 
+partially matched up to the position of the zero-width assertion. Embedded functions are 
+also used to convert the partially matched (sub-)string into another string, during 
+matching a regular expression. Regular expressions in rtlex are specified as wrapped in 
+[*quasi quotes*](https://wiki.haskell.org/Quasiquotation) and thus compiled at the 
+compile-time of the lexical analyzer.
 
 Actions that will run when their associated patterns are matched are ordinary Haskell monadic functions under some user-specified monad such as `IO`. They are given as an argument the matched input string by the associated patterns. As all actions share the same monad, they can communicate with each other through the monad; we can use, for example, simple mutable reference like [`IORef`](https://hackage.haskell.org/package/base-4.9.1.0/docs/Data-IORef.html), or a transformed monad like [`StateT u IO`](https://hackage.haskell.org/package/transformers-0.5.2.0/docs/Control-Monad-Trans-State-Lazy.html) with some user state type `u`.
 
@@ -24,6 +51,7 @@ and if we give it the input, "helloworld", it will not execute either action unt
 Note that most lexical analyzers (including the `flex`) are not so "smart" enough to match multiple patterns simultanenously, and when they get to know the first pattern does not match "helloworks" at the character 'k' they simply backtracks and try to match the second pattern back from the start of the input. (In fact, if they are to be "smart", they need to include actions into their associated regular expressions (regular expression ASTs, to be accurate) and then combine all those regular expressions across rules into a single regular expression, before starting to match them.)
 
 So, to facilitate the analysis of real-time streams, rtlex features:
+
 > - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
 > - simultaneous matching of all patterns, rather than trying patterns one by one. (By simultaneous, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and then another pattern is tried.)
 
@@ -166,7 +194,16 @@ analyzer =
 
 ## Regular expressions
 
-In rtlex, patterns are written in regular expressions instead of in context-free grammar. Since the regular expressions here are extended to embed any Haskell expressions (as well as variables) that lead to other regular expressions, we will see these regular expressions are more powerful than context-free grammar in terms of the recognizable languages. Moreover, the engine for matching such regular expressions is implemented with the [Glushkov NFA algorithm](http://sebfisch.github.io/haskell-regexp/), which runs efficiently in *O(nm)* where *n* is the length of the input and *m* the size of the regular expression. The algorithm does not involve any backtracking to match every possible alternative in regular expressions, and thus works best with real-time streams that are hard to take back characters that have already been consumed.
+In rtlex, patterns are written in regular expressions instead of in context-free grammar. 
+Since the regular expressions here are extended to embed any Haskell expressions (as well 
+as variables) that lead to other regular expressions, we will see these regular 
+expressions are more powerful than context-free grammar with respect to the recognizable 
+languages. Moreover, the engine for matching such regular expressions is implemented with 
+the [Glushkov NFA algorithm](http://sebfisch.github.io/haskell-regexp/), which runs 
+efficiently in *O(nm)* where *n* is the length of the input and *m* the size of the 
+regular expression. The algorithm does not involve any backtracking to match every 
+possible alternative in regular expressions, and thus works best with real-time streams 
+that are hard to take back characters that have already been consumed.
 
 The [LL grammar](https://en.wikipedia.org/wiki/LL_grammar) for regular expressions that rtlex takes is:
 ```
@@ -303,7 +340,7 @@ ParseTerm    = <a character>
     -- B
     ```
 
-    The assertion function also acts as a converter, and so it can convert the partially matched string up to its position into another string. In fact, in the above example, the assertion function actually converts a new-line character into the null string, `""`, otherwise the finally matched string that is printed on the screen would be "\nB" instead of "B". Also note that it returns the converted string in a list rather than as is. Actually, an assertion function can convert a string into multiple strings, and when some (or all) of the strings finally pass through all the remaining patterns behind the assertion function, they will be fed to their corresponding action one be one.
+    The assertion function also acts as a converter, and so it can convert the partially matched string up to its position into another string. In fact, in the above example, the assertion function actually converts a new-line character into the null string, `""`, otherwise the finally matched string that is printed on the screen would be "\\nB" instead of "B". Also note that it returns the converted string in a list rather than as is. Actually, an assertion function can convert a string into multiple strings, and when some (or all) of the strings finally pass through all the remaining patterns behind the assertion function, they will be fed to their corresponding action one be one.
     ```haskell
     main :: IO ()
     main =  -- finds ".he" only if it is "she", and converts it into "SHE".
