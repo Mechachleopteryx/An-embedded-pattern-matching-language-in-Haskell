@@ -3,16 +3,17 @@
 **Rtlex** (Real-time [Lexical 
 Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a 
 tool for generating real-time lexical analyzer over network stream (or any kind of 
-real-time stream) in Haskell. It is similar to the legacy lexical analyzer generator such 
-as `flex` in the syntax and the semantics; it executes a monadic action (that is, an 
-action possibly having a side-effect) whenever a pattern among many specified patterns 
-matches some text from the input stream. However, it differs in that it deals with 
-real-time stream rather than a saved file, it codes the lexical analyzer specification 
-directly in Haskell's template language, and it extends the pattern so that we can embed 
-match-time Haskell code in it. To effectly work on a real-time stream, its 
-pattern-matching engine is implemented on the basis of the very efficient Glushkov's 
+real-time stream) in Haskell. It is basically similar to the legacy lexical analyzer 
+generator such as `flex` in the syntax and the semantics; it executes a monadic action 
+(that is, an action possibly having a side-effect) whenever a pattern among many 
+specified patterns matches some text from the input stream. However, it differs in that 
+it deals with real-time stream rather than a already saved file, it codes the lexical 
+analyzer specification directly in Haskell's template language, and it extends the 
+pattern so that we can embed Haskell code running on match time in it. To effectly work 
+on a real-time stream, its pattern-matching engine is implemented on the basis of the 
+very efficient Glushkov's 
 [NFA](https://msdn.microsoft.com/en-us/library/e347654k(v=vs.110).aspx) matching 
-algorithm that can keep matching multiple patterns simultaneously and without 
+algorithm, which can keep matching multiple patterns simultaneously and do that without 
 [backtracking](https://msdn.microsoft.com/en-us/library/dsy130b4(v=vs.110).aspx), and as 
 such, does not rely on the stream being recoverable (or bufferable) by using things like 
 [`unget()`](http://www.cplusplus.com/reference/istream/istream/unget/).
@@ -26,7 +27,7 @@ and arbitrary (in-line) Haskell functions in it. We can use embedded variables t
 as ordinary Haskell variables or we can use them to interpolate other regular expressions 
 into a regular expression. With them, we can even interpolate a regular expression into 
 itself to generate a recursive pattern. Moreover, we can embed a Haskell function into a 
-regular expression to interpolate another regular expression dynamically, which is quite 
+regular expression to dynamically interpolate another regular expression, which is quite 
 similar to `(??{code})` in Perl.
 
 We can use the embedded function as a [zero-width 
@@ -36,15 +37,15 @@ partially matched so far up to the position of the zero-width assertion. The emb
 function is also used to convert the partially matched (sub-)string into another string, 
 while matching the regular expression. Regular expressions in rtlex are specified as 
 wrapped in [*quasi quotes*](https://wiki.haskell.org/Quasiquotation) and thus compiled at 
-the compilation time of the lexical analyzer itself. That is, we don't need second 
-compilation to compile it into a Haskell or C code, which is the usual process follwed by 
-the legacy lexer.
+the compilation time of the lexical analyzer itself. That is, we don't need another 
+compilation to compile it into a Haskell or C code, which is the usual process followed 
+by the legacy lexer.
 
 Actions that will run when their associated patterns are matched are ordinary Haskell 
 monadic functions under any user-specified monad such as `IO`. They are given, as an 
-argument, the input string matched by the associated patterns for looking it up. As all 
-actions share the same monad, they can communicate with each other through the monad, and 
-we can use, for example, simple mutable reference like 
+argument, the input string matched by the associated patterns for further looking it up. 
+As all actions share the same monad, they can communicate with each other through the 
+monad, and we can use, for example, simple mutable reference like 
 [`IORef`](https://hackage.haskell.org/package/base-4.9.1.0/docs/Data-IORef.html), or a 
 transformed monad like [`StateT u 
 IO`](https://hackage.haskell.org/package/transformers-0.5.2.0/docs/Control-Monad-Trans-State-Lazy.html) 
