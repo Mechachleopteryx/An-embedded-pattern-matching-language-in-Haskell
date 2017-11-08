@@ -3,13 +3,13 @@
 **Rtlex** (Real-time [Lexical 
 Analyzer](https://en.wikibooks.org/wiki/Compiler_Construction/Lexical_analysis)) is a 
 tool for generating real-time lexical analyzer over network stream (or any kind of 
-real-time streams) in Haskell. It is a little similar to the legacy lexical analyzer 
-generator such as `flex` in the syntax and the semantics; it executes a monadic action 
-(that is, an action possibly having a side-effect) whenever a pattern among many 
-specified patterns matches some text from the input stream. However, it differs in that 
-it deals with real-time stream rather than a "static" file, it codes the analyzer 
-specification directly in Haskell's template language, and it extends the pattern so that 
-we can embed match-time Haskell code in it. To effectly work on a real-time stream, its 
+real-time streams) in Haskell. It is similar to the legacy lexical analyzer generator 
+such as `flex` in the syntax and the semantics; it executes a monadic action (that is, an 
+action possibly having a side-effect) whenever a pattern among many specified patterns 
+matches some text from the input stream. However, it differs in that it deals with 
+real-time stream rather than a saved file, it codes the lexical analyzer specification 
+directly in Haskell's template language, and it extends the pattern so that we can embed 
+match-time Haskell code in it. To effectly work on a real-time stream, its 
 pattern-matching engine is implemented on the basis of a very efficient 
 [NFA](https://msdn.microsoft.com/en-us/library/e347654k(v=vs.110).aspx) algorithm that 
 can keep matching multiple patterns simultaneously and without 
@@ -21,9 +21,9 @@ Rtlex uses (self- and mutual- as well) [recursive regular
 expressions](http://www.regular-expressions.info/recurse.html) for specifying patterns to 
 match with, which are easier to write and are better to fit in a lexical analyzer than 
 the [context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar), as we 
-will see later. It also extends its regular expression so that we can embed Haskell 
-variables and arbitrary (in-line) Haskell functions in it. We can use embedded variables 
-the same as ordinary Haskell variables or we can use them to interpolate another regular 
+will see later. It extends its regular expression so that we can embed Haskell variables 
+and arbitrary (in-line) Haskell functions in it. We can use embedded variables the same 
+as ordinary Haskell variables or we can use them to interpolate another regular 
 expression into a regular expression. With them, we can even interpolate a regular 
 expression into itself to generate a recursive pattern. Moreover, we can embed a Haskell 
 function into a regular expression to interpolate another regular expression dynamically, 
@@ -36,9 +36,17 @@ partially matched up to the position of the zero-width assertion. Embedded funct
 also used to convert the partially matched (sub-)string into another string, while 
 matching a regular expression. Regular expressions in rtlex are specified as wrapped in 
 [*quasi quotes*](https://wiki.haskell.org/Quasiquotation) and so compiled at the 
-compile-time of the lexical analyzer itself.
+compilation time of the lexical analyzer itself.
 
-Actions that will run when their associated patterns are matched are ordinary Haskell monadic functions under some user-specified monad such as `IO`. They are given as an argument the matched input string by the associated patterns. As all actions share the same monad, they can communicate with each other through the monad; we can use, for example, simple mutable reference like [`IORef`](https://hackage.haskell.org/package/base-4.9.1.0/docs/Data-IORef.html), or a transformed monad like [`StateT u IO`](https://hackage.haskell.org/package/transformers-0.5.2.0/docs/Control-Monad-Trans-State-Lazy.html) with some user state type `u`.
+Actions that will run when their associated patterns are matched are ordinary Haskell 
+monadic functions under any user-specified monad such as `IO`. They are given, as an 
+argument, the input string matched by the associated patterns. As all actions share the 
+same monad, they can communicate with each other through the monad; we can use, for 
+example, simple mutable reference like 
+[`IORef`](https://hackage.haskell.org/package/base-4.9.1.0/docs/Data-IORef.html), or a 
+transformed monad like [`StateT u 
+IO`](https://hackage.haskell.org/package/transformers-0.5.2.0/docs/Control-Monad-Trans-State-Lazy.html) 
+with some user state type `u`.
 
 ## Why to analyze in real-time?
 
