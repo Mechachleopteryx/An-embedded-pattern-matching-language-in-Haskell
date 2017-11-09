@@ -230,11 +230,11 @@ analyzer =
         ]
 ```
 
-- `QuasiQuotes` language extension enables for us to specify regular expressions within 
-  `[regex|...|]`. The regular expressions inside are compiled (that is, encoded into 
-  regular expression ASTs) at the compilation time of the source code. So, if there is an 
-  error within a regular expression, it will be reported at compile-time. The syntax and 
-  the semantics for regular expressions are described 
+- `QuasiQuotes` enables Haskell language extension for us to specify regular expressions 
+  within the `[regex|...|]` quasi quoter. The regular expressions inside are compiled 
+  (that is, encoded into regular expression ASTs) at the compilation time of the source 
+  code. So, if there is an error within a regular expression, it will be reported at 
+  compile-time. The syntax and the semantics for regular expressions are described 
   [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#regular-expressions).
 
 - `import Parser` imports the definition for `[regex|...|]` quasi quoter and the regular 
