@@ -230,13 +230,32 @@ analyzer =
         ]
 ```
 
-- `QuasiQuotes` language extension is for specifying regular expressions within `[regex|...|]`. And regular expressions are compiled (that is, encoded into regular expression ASTs) at the compile-time of source code. So, if there is an error in a regular expression, it will be reported at compile-time. The syntax and semantics for regular expressions are described [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#regular-expressions).
+- `QuasiQuotes` language extension enables for us to specify regular expressions within 
+  `[regex|...|]`. The regular expressions inside are compiled (that is, encoded into 
+  regular expression ASTs) at the compilation time of the source code. So, if there is an 
+  error within a regular expression, it will be reported at compile-time. The syntax and 
+  the semantics for regular expressions are described 
+  [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#regular-expressions).
 
-- `import Parser` imports the `[regex|...|]` quasi quoter and the regular expression engine.
+- `import Parser` imports the definition for `[regex|...|]` quasi quoter and the regular 
+  expression engine.
 
 - `import Rtlex` imports: `Stream`, `stream`, `stream0`, `yyLex`, `rules`, `($$)`, `rule`, `yyReturn`, `yyAccept`, and `yyReject`.
 
-- The `analyzer` consists of three sections, `stream`, `yyLex`, and `rules`, separated by `$$` operator. Each section is actually implemented as a [coroutine](https://en.wikipedia.org/wiki/Coroutine) that interacts with each other internally using yield (and resume), and the `$$` operator plays the role of binding those coroutines. The middle coroutine `yyLex` acts as a proxy between the upper and the lower coroutines, and reads each input character from the input stream and passes it to `rules`. The `rules` tries to match each rule in its rules list with the given character, runs actions that correspond to successfully matched patterns, and reports the results from such actions to `yyLex` one by one. Then with each result from `rules`, `yyLex` calls `yacc` that is present as its argument, before `yyLex` repeats the next cycle of reading another character from the stream and so on.
+- The `analyzer` consists of three sections, `stream`, `yyLex`, and `rules`, separated by 
+  `$$` operator. Each section is actually implemented as a 
+  [coroutine](https://en.wikipedia.org/wiki/Coroutine) that interacts with each other 
+  internally using `yield` (and `resume`), and the `$$` operator plays the role of 
+  binding those coroutines. The second and middle coroutine `yyLex` acts as a proxy 
+  between the upper and the lower coroutines, and reads in each input character from the 
+  input stream and passes it to `rules` below. The third and lower coroutine `rules` 
+  tries to match each rule in its rules list with the passed character, and if a rule has 
+  the pattern that matches with the input up to the given character it runs the action of 
+  the rule and reports the result from the action to `yyLex`. As a coroutine, it reports 
+  each result to `yyLex` as a rule is matched and the corresponding action is executed. 
+  Then with each result coming from `rules`, `yyLex` calls `yacc` that is present as its 
+  argument, before `yyLex` repeats the next cycle of reading another character from the 
+  stream and so on.
 
 - `stream` introduces an input stream and takes two arguments, `r0` and a string. `r0` can be any user-determined value of type `r`, and will be returned as a result from `analyzer` when the end of stream is reached. String is a list of characters to be served as the stream. Instead of a string, a bytestring or anything from an instance of `Stream` class can be used as well.
 
