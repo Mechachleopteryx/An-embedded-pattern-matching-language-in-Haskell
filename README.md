@@ -243,21 +243,32 @@ analyzer =
 - `import Rtlex` imports: `Stream`, `stream`, `stream0`, `yyLex`, `rules`, `($$)`, `rule`, `yyReturn`, `yyAccept`, and `yyReject`.
 
 - The `analyzer` consists of three sections, `stream`, `yyLex`, and `rules`, separated by 
-  `$$` operator. Each section is actually implemented as a 
-  [coroutine](https://en.wikipedia.org/wiki/Coroutine) that interacts with each other 
-  internally using `yield` (and `resume`), and the `$$` operator plays the role of 
-  binding those coroutines. The second and middle coroutine `yyLex` acts as a proxy 
-  between the upper and the lower coroutines, and reads in each input character from the 
-  input stream and passes it to `rules` below. The third and lower coroutine `rules` 
-  tries to match each rule in its rules list with the passed character, and if a rule has 
-  the pattern that matches with the input up to the given character it runs the action of 
-  the rule and reports the result from the action to `yyLex`. As a coroutine, it reports 
-  each result to `yyLex` as a rule is matched and the corresponding action is executed. 
-  Then with each result coming from `rules`, `yyLex` calls `yacc` that is present as its 
-  argument, before `yyLex` repeats the next cycle of reading another character from the 
-  stream and so on.
+  `$$` operator. Each section is actually a 
+  [coroutine](https://en.wikipedia.org/wiki/Coroutine) that interacts with each other by 
+  sending and receiving each input character and the result of match (if successful) with 
+  the given character, using `yield` and `resume`, which are not exported by default 
+  because they are to be used only internally. The `$$` operator plays the role of 
+  binding those three coroutines.
 
-- `stream` introduces an input stream and takes two arguments, `r0` and a string. `r0` can be any user-determined value of type `r`, and will be returned as a result from `analyzer` when the end of stream is reached. String is a list of characters to be served as the stream. Instead of a string, a bytestring or anything from an instance of `Stream` class can be used as well.
+- The `stream` is the first and upper coroutine, which introduces an input stream to read 
+  in and passes each character from the input to the other coroutines, `yyLex` and 
+  `rules`. It takes two arguments, `r0` and a string. `r0` is a result value that will 
+  finally be returned by `analyzer` when the input stream is reached to the end. The type 
+  of `r0` can be any user-determined type `r`, which is specified in the type signature 
+  `analyzer :: m r`. The string denotes a list of characters that will be served as the 
+  input stream. If other kind of stream is preferred than a simple list of characters, we 
+  can have any instance of `Stream` class and use it with the more generic `stream0` 
+  instead of `stream`.
+
+- The second and middle coroutine `yyLex` acts as a proxy between the upper and the lower 
+  coroutines, and reads in each input character from the input stream and passes it to 
+  `rules` below. The third and lower coroutine `rules` tries to match each rule in its 
+  rules list with the passed character, and if a rule has the pattern that matches with 
+  the input up to the given character it runs the action of the rule and reports the 
+  result from the action to `yyLex`. As a coroutine, it reports each result to `yyLex` as 
+  a rule is matched and the corresponding action is executed. Then with each result 
+  coming from `rules`, `yyLex` calls `yacc` that is present as its argument, before 
+  `yyLex` repeats the next cycle of reading another character from the stream and so on.
 
 - `yyLex` takes a user-defined function called `yacc`, which has type of `a -> m b`. `yacc` is a monadic function, taking each `a` that results from actions when their corresponding patterns are matched, and returning `b` under the user-determined monad `m`. The monad `m` will usually be the `IO` monad or some transformed monad of `IO`, but any monad will be ok. The monad result `b` is currently not used and can be anything, but is reserved for a future extension and will be possibly used to communicate with the stream to control it.
 
