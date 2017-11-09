@@ -306,13 +306,14 @@ analyzer =
     ```
 
     As we can see, there are two user-determined types involved, `r` and `a` that are 
-    already introduced above. `a` is for reportng a value to `yyLex` and thus `yacc`, and 
-    `r` is for stopping and exiting the `analyzer` immediately with the return value of a 
-    `r`. So, before reaching the end of stream, we can early exit from `analyzer` using 
-    the `Return`. `Accept` is used to accept the current match and report an `a` to 
-    `yyLex`, blocking further actions that also have their patterns matched from being 
-    executed. `Reject` just passes control over to the next matched action of having an 
-    associated pattern matched. (See the details 
+    already introduced above. `a` is for reporting a result value to `yyLex` and thus 
+    `yacc`, and `r` is for the final return value from `analyzer`. We can use `Return r` 
+    to stop and exit the `analyzer` immediately with the return value of a `r`, which, 
+    before reaching the end of stream, we can early exit from `analyzer` using the 
+    `Return`. `Accept` is used to accept the current match and report an `a` to `yyLex`, 
+    blocking further actions that also have their patterns matched from being executed. 
+    `Reject` just passes control over to the next matched action of having an associated 
+    pattern matched. (See the details 
     [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
     Note that the `action` functions and `yacc` function run under the same shared monad 
     `m`, which means they can interact with each other through the monad. To make it 
