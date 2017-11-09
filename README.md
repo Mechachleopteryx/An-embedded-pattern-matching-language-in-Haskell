@@ -302,7 +302,7 @@ analyzer =
     data ActionResult r a
         = Return r  -- to finish the lexical analyzer immediately with value "r"
 	| Accept a  -- to accept the current match and report value "a" to `yyLex`
-	| Reject    -- to reject the current match and try other actions
+	| Reject    -- to reject the current match and continue to try other rules
     ```
 
     As we can see, there are two user-determined types involved, `r` and `a` that are 
