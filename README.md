@@ -311,14 +311,14 @@ analyzer =
 
     We can use `Return r` to stop `anyalyzer` and exit immediately with the return value 
     of `r` even before reaching the end of stream. The `Accept` is used to accept the 
-    current match and report an `a` to `yyLex`, blocking next rules from matching their 
-    patterns. The `Reject` just passes the control over to the next rules to allow their 
-    possiblity to match (See the details 
+    current match and report an `a` to `yyLex`, blocking next rules from having a chance 
+    to match their patterns. However, the `Reject` passes the control over to the next 
+    rules to allow their possiblity to match their patterns (See the details 
     [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
     Note that the each `action` function and `yacc` function run under the same shared 
-    monad `m`, which means they can interact with each other through the same monad. To 
-    make it easy to use those `ActionResult`'s constructors, three short-cuts are 
-    provided:
+    monad `m`, so that they can interact with each other through the same monad. The 
+    following three short-cuts are provided in `Rtlex` to make it easy to use those 
+    `ActionResult`'s constructors:
     ```haskell
     yyReturn :: Monad m => r -> m (ActionResult r a)
     yyReturn = return . Return
