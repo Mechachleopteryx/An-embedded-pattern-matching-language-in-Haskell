@@ -682,7 +682,8 @@ When we run the above program and run some client program, we will get things li
 $ nc localhost 3001
 ha ha ho hoo hi ha
 ^D
-
+```
+```
 *Main> main
 Starting server ...
 ha
