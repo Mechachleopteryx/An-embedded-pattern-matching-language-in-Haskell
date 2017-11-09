@@ -280,18 +280,19 @@ analyzer =
 
 - The third and lower coroutine `rules` introduces rules in a list, each of which is 
   separated by a comma "`,`". It tries to match each rule in its rules list with the 
-  passed character, and if a rule has a pattern that matches with the input up to the 
-  given character it runs the action of the rule and reports the result from the action 
-  to the upper `yyLex`. As a coroutine, it reports each result to `yyLex` if and only if 
-  a rule is matched. The type of the result should match the argument type of `yacc` 
-  function in `yyLex`, though it may be implicitly inferred from the definitions of 
-  actions and `yacc` without having a specific type signature for it.
+  passed character, and if a rule has a pattern matching with the input up to the given 
+  character it runs the action of the rule and reports the result from the action to the 
+  upper `yyLex`. As a coroutine, it reports each result to `yyLex` if and only if a rule 
+  is matched. The type of the result should match the argument type of `yacc` function in 
+  `yyLex`, though it may be implicitly inferred from the code of each action and `yacc` 
+  without having a specific type signature for it.
 
-- `rule` combines a quasi-quoted regular expression and a user-defined `action` function 
-  into a rule. Each pattern of rules is matched as characters are read from the input 
-  stream, and if a pattern successfully matches a string from the stream up to the 
-  current character, the corresponding action is called with the matched string by the 
-  pattern as an argument. (More details about the matching algorithm are explained 
+- The `rule` specifies each rule as a pattern-action pair, and combines a quasi-quoted 
+  regular expression as a pattern and a user-defined `action` function into a rule. Each 
+  pattern is tried to match as an input character is given by the above coroutine, and if 
+  a pattern successfully matches a string from the input up to the current input 
+  character, the corresponding action is invoked with the matched string so far as an 
+  argument. (More details about the matching algorithm are explained 
   [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
   Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
   is defined as:
@@ -302,7 +303,19 @@ analyzer =
         | Reject    -- to reject the current match and try other actions
     ```
 
-    As you see, there are two user-determined types involved, `r` and `a` that are already introduced above. `a` is for reportng a value to `yyLex` and thus `yacc`, and `r` is for stopping and exiting the `analyzer` immediately with the return value of a `r`. So, before reaching the end of stream, we can early exit from `analyzer` using the `Return`. `Accept` is used to accept the current match and report an `a` to `yyLex`, blocking further actions that also have their patterns matched from being executed. `Reject` just passes control over to the next matched action of having an associated pattern matched. (See the details [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) Note that the `action` functions and `yacc` function run under the same shared monad `m`, which means they can interact with each other through the monad. To make it convenient to use those constructors of `ActionResult` under the monad, three short-cuts are provided:
+    As we can see, there are two user-determined types involved, `r` and `a` that are 
+    already introduced above. `a` is for reportng a value to `yyLex` and thus `yacc`, and 
+    `r` is for stopping and exiting the `analyzer` immediately with the return value of a 
+    `r`. So, before reaching the end of stream, we can early exit from `analyzer` using 
+    the `Return`. `Accept` is used to accept the current match and report an `a` to 
+    `yyLex`, blocking further actions that also have their patterns matched from being 
+    executed. `Reject` just passes control over to the next matched action of having an 
+    associated pattern matched. (See the details 
+    [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
+    Note that the `action` functions and `yacc` function run under the same shared monad 
+    `m`, which means they can interact with each other through the monad. To make it 
+    convenient to use those constructors of `ActionResult` under the monad, three 
+    short-cuts are provided:
     ```haskell
     yyReturn :: Monad m => r -> m (ActionResult r a)
     yyReturn = return . Return
