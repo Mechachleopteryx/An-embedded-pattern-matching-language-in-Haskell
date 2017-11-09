@@ -287,12 +287,13 @@ analyzer =
   `yyLex`, though it may be implicitly inferred from the code of each action and `yacc` 
   without having a specific type signature for it.
 
-- The `rule` specifies each rule as a pattern-action pair, and combines a quasi-quoted 
-  regular expression as a pattern and a user-defined `action` function into a rule. Each 
-  pattern is tried to match as an input character is given by the above coroutine, and if 
-  a pattern successfully matches a string from the input up to the current input 
-  character, the corresponding action is invoked with the matched string so far as an 
-  argument. (More details about the matching algorithm are explained 
+- The `rule` in `rules` section specifies each rule as a pattern-action pair, and 
+  combines a quasi-quoted regular expression for a pattern and a user-defined `action` 
+  function into a rule. Each pattern is tried to match as an input character is given by 
+  the above coroutine. If a pattern successfully matches a string from the input up to 
+  the current input character, the corresponding action is invoked with the matched (and 
+  accumulated) string so far as an argument. (The matching algorithm needs explaining 
+  more details, which are on 
   [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
   Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
   is defined as:
