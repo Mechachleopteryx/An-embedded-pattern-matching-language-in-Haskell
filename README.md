@@ -293,8 +293,9 @@ analyzer =
   the above coroutine. If a pattern successfully matches a string from the input up to 
   the current input character, the corresponding action is invoked with the matched (and 
   accumulated) string so far as an argument. (The matching algorithm needs explaining 
-  more details, which are on 
-  [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
+  more details, which are 
+  [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).)
+
   Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
   is defined as:
     ```haskell
