@@ -205,9 +205,11 @@ ha
 
 A network-stream version of this code is introduced at the [**Network streams**](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#network-streams) section near the end of this document.
 
-## Details about general form
+## How to use it?
 
-Rtlex has the following general form.
+See `sample.hs` for an example.
+
+Rtlex basically has the following general form.
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
 
