@@ -122,7 +122,7 @@ So, to facilitate the lexical analysis with real-time stream, rtlex features:
 > - simultaneous matching of all patterns, rather than matching patterns one at a time. 
 >   (By simultaneous, I do not mean that every pattern is matched through a separate 
 >   thread, but I mean that patterns are matched in such an interleaved way that there 
->   will be no backtracking when a pattern fails to match and another pattern is tried.)
+>   will be no backtracking when a pattern fails and another pattern is tried.)
 
 ## An example
 
@@ -136,11 +136,11 @@ import Control.Monad (when)
 
 main :: IO Int
 main =
-    stream (-1) "sheerEnd"  -- main returns (-1) if stream runs out.
+    stream (-1) "sheerEnd"  -- main returns -1 if stream runs out.
 
     $$ yyLex (const $ return ())
-        -- A simple analyzer here does nothing with the resulting reports from actions 
-        -- that are executed when corresponding patterns match some input.
+	-- As a simple analyzer, it does nothing here with the resulting reports from
+	-- actions that are executed when corresponding patterns match some input.
 
     $$ rules [
         rule [regex|End|]   $ \s -> yyReturn 0,  -- main returns 0 if "End" is reached.
@@ -151,7 +151,7 @@ main =
             when ( s == "her" ) $
                 putStrLn s
             yyReject
-        ]
+       ]
 ```
 It can match "she" and "he" while matching "sheer".
 ```
