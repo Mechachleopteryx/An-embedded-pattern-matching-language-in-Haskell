@@ -296,7 +296,7 @@ analyzer =
   more details, which are 
   [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).)
 
-  Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
+- Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
   is imported from `Rtlex` like:
     ```haskell
     data ActionResult r a
@@ -305,19 +305,19 @@ analyzer =
 	| Reject    -- to reject the current match and continue to try other rules
     ```
 
-    As we can see, there are two user-determined types involved, `r` and `a` that are 
-    already introduced above. `a` is for reporting a result value to `yyLex` and hence 
+    As we can see, there are two user-determined types involved, `r` and `a` that have 
+    been introduced above. The `a` is for reporting a result value to `yyLex` and hence 
     `yacc`, and `r` is for the final return value from `analyzer`.
 
     We can use `Return r` to stop `anyalyzer` and exit immediately with the return value 
     of `r` even before reaching the end of stream. The `Accept` is used to accept the 
     current match and report an `a` to `yyLex`, blocking next rules from having a chance 
     to match their patterns. However, the `Reject` passes the control over to the next 
-    rules to allow their possiblity to match their patterns (See the details 
+    rules to allow an possiblity to match their patterns (See about the details 
     [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
-    Note that the each `action` function and `yacc` function run under the same shared 
-    monad `m`, so that they can interact with each other through the same monad. The 
-    following three short-cuts are provided in `Rtlex` to make it easy to use those 
+    Note also that the each `action` function and `yacc` function run under the same 
+    shared monad `m`, so that they can interact with each other through the same monad. 
+    The following three short-cuts are provided in `Rtlex` to make it easy to use those 
     `ActionResult`'s constructors:
     ```haskell
     yyReturn :: Monad m => r -> m (ActionResult r a)
