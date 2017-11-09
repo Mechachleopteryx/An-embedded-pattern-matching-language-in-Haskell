@@ -297,7 +297,7 @@ analyzer =
   [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).)
 
   Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
-  is defined as:
+  is `import`ed from `Rtlex` like:
     ```haskell
     data ActionResult r a
         = Return r  -- to finish the lexical analyzer immediately with value "r"
