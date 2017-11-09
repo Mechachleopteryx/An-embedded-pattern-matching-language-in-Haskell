@@ -151,9 +151,9 @@ main =
             when ( s == "her" ) $
                 putStrLn s
             yyReject
-       ]
+	]
 ```
-It can match "she" and "he" while matching "sheer".
+It shows that "she" and "he" is matched with the input "sheerEnd".
 ```
 *Main> main
 she
@@ -164,7 +164,8 @@ sheer
 
 ## Another example
 
-By having `StateT (Map String Int) IO` instead of the `IO` monad, we can count occurrences of words with the State monad.
+By having `StateT (Map String Int) IO` instead of the `IO` monad, we can count 
+occurrences of particular words with the State monad.
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
 
