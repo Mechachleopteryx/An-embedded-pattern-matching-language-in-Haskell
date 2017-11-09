@@ -256,28 +256,45 @@ analyzer =
   that will finally be returned by `analyzer` when the input stream is reached to the 
   end. The type of `r0` can be any user-determined type `r`, which is specified in the 
   type signature `analyzer :: m r`. The string as the second argument denotes a list of 
-  characters that will be served as the input stream. If other kind of stream is 
-  preferred than a simple list of characters, we can define any instance of `Stream` 
-  class and use it with the more generic function `stream0` rather than `stream`. See the 
-  [**Network 
+  characters that will be served as the input stream. If other kind of stream (such as 
+  `ByteString`) is preferred than a simple list of characters, we can define any instance 
+  of `Stream` class and use it with the more generic function `stream0` rather than 
+  `stream`. See the [**Network 
   streams**](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#network-streams) 
   section for this usage.
 
 - The second and middle coroutine `yyLex` acts as a proxy between the upper and the lower 
-  coroutines, and reads in each input character from the input stream and passes it to 
-  `rules` below. The third and lower coroutine `rules` tries to match each rule in its 
-  rules list with the passed character, and if a rule has the pattern that matches with 
-  the input up to the given character it runs the action of the rule and reports the 
-  result from the action to `yyLex`. As a coroutine, it reports each result to `yyLex` as 
-  a rule is matched and the corresponding action is executed. Then with each result 
-  coming from `rules`, `yyLex` calls `yacc` that is present as its argument, before 
-  `yyLex` repeats the next cycle of reading another character from the stream and so on.
+  coroutines. With the input character coming from the upper `stream`, `yyLex` just 
+  passes it down to the below coroutine `rules`, but `yyLex` deals with the match result 
+  returned from the `rules` if `rules` finds a pattern is matched with the input 
+  character.
 
-- `yyLex` takes a user-defined function called `yacc`, which has type of `a -> m b`. `yacc` is a monadic function, taking each `a` that results from actions when their corresponding patterns are matched, and returning `b` under the user-determined monad `m`. The monad `m` will usually be the `IO` monad or some transformed monad of `IO`, but any monad will be ok. The monad result `b` is currently not used and can be anything, but is reserved for a future extension and will be possibly used to communicate with the stream to control it.
+  `yyLex` takes as its argument a user-defined function called `yacc`, which has type of 
+  `a -> m b`. `yacc` is a user-defined monadic function. It takes an `a` that is a result 
+  value returned from an action in one of `rules`'s rules when the corresponding pattern 
+  is matched with the current input character. It returns `m b` with the user-determined 
+  monad `m`. The monad `m` will usually be the `IO` monad or some transformed monad of 
+  `IO`, but any monad can be used. The monad result `b` can be anything because it is 
+  currently not used for now, but it is reserved for a future extension and will be 
+  possibly used to communicate with the stream to control it.
 
-- `rules` introduces rules in a list. As such, each rule in the list must be separated with a comma, "`,`".
+- The third and lower coroutine `rules` introduces rules in a list, each of which is 
+  separated by a comma "`,`". It tries to match each rule in its rules list with the 
+  passed character, and if a rule has a pattern that matches with the input up to the 
+  given character it runs the action of the rule and reports the result from the action 
+  to the upper `yyLex`. As a coroutine, it reports each result to `yyLex` if and only if 
+  a rule is matched. The type of the result should match the argument type of `yacc` 
+  function in `yyLex`, though it may be implicitly inferred from the definitions of 
+  actions and `yacc` without having a specific type signature for it.
 
-- `rule` combines a quasi-quoted regular expression and a user-defined `action` function into a rule. Each pattern of rules is matched as characters are read from the input stream, and if a pattern successfully matches a string from the stream up to the current character, the corresponding action is called with the matched string by the pattern as an argument. (More details about the matching algorithm are explained [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type is defined as:
+- `rule` combines a quasi-quoted regular expression and a user-defined `action` function 
+  into a rule. Each pattern of rules is matched as characters are read from the input 
+  stream, and if a pattern successfully matches a string from the stream up to the 
+  current character, the corresponding action is called with the matched string by the 
+  pattern as an argument. (More details about the matching algorithm are explained 
+  [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
+  Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
+  is defined as:
     ```haskell
     data ActionResult r a
         = Return r  -- to finish the lexical analyzer immediately with value "r"
