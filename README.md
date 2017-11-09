@@ -117,12 +117,12 @@ rules into a single regular expression, before start matching with them.)
 
 So, to facilitate the lexical analysis with real-time stream, rtlex features:
 
-> - immediate matching of patterns, rather than lazy matching to search for any possible longer matches, and
+> - immediate matching of patterns, rather than lazy matching to search for any possible 
+>   longer matches, and
 > - simultaneous matching of all patterns, rather than matching patterns one at a time. 
 >   (By simultaneous, I do not mean that every pattern is matched through a separate 
 >   thread, but I mean that patterns are matched in such an interleaved way that there 
->   will be no backtracking when a pattern fails to match and then another pattern is 
->   tried.)
+>   will be no backtracking when a pattern fails to match and another pattern is tried.)
 
 ## An example
 
