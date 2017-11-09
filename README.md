@@ -250,15 +250,18 @@ analyzer =
   because they are to be used only internally. The `$$` operator plays the role of 
   binding those three coroutines.
 
-- The `stream` is the first and upper coroutine, which introduces an input stream to read 
-  in and passes each character from the input to the other coroutines, `yyLex` and 
-  `rules`. It takes two arguments, `r0` and a string. `r0` is a result value that will 
-  finally be returned by `analyzer` when the input stream is reached to the end. The type 
-  of `r0` can be any user-determined type `r`, which is specified in the type signature 
-  `analyzer :: m r`. The string denotes a list of characters that will be served as the 
-  input stream. If other kind of stream is preferred than a simple list of characters, we 
-  can have any instance of `Stream` class and use it with the more generic `stream0` 
-  instead of `stream`.
+- The `stream` is the first and upper coroutine, which introduces an input stream to work 
+  on and reads in each character from the input to hand over to the other coroutines, 
+  `yyLex` and `rules`. It takes two arguments, `r0` and a string. `r0` is a result value 
+  that will finally be returned by `analyzer` when the input stream is reached to the 
+  end. The type of `r0` can be any user-determined type `r`, which is specified in the 
+  type signature `analyzer :: m r`. The string as the second argument denotes a list of 
+  characters that will be served as the input stream. If other kind of stream is 
+  preferred than a simple list of characters, we can define any instance of `Stream` 
+  class and use it with the more generic function `stream0` rather than `stream`. See the 
+  [**Network 
+  streams**](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#network-streams) 
+  section for this usage.
 
 - The second and middle coroutine `yyLex` acts as a proxy between the upper and the lower 
   coroutines, and reads in each input character from the input stream and passes it to 
