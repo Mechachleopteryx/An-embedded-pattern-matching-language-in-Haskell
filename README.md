@@ -299,6 +299,7 @@ ParseTerm    = <a character>
         $$ rules [
             rule [regex|land|island|] $ \s -> do putStrLn s; yyAccept ()
             ]
+
     -- Output will be:
     -- *Main> main
     -- land
@@ -315,6 +316,7 @@ ParseTerm    = <a character>
             rule [regex|island|] $ \s -> do putStrLn s; yyAccept (),
             rule [regex|land|]   $ \s -> do putStrLn s; yyAccept ()
             ]
+
     -- Output will be:
     -- *Main> main
     -- island
@@ -331,6 +333,7 @@ ParseTerm    = <a character>
         $$ rules [
             rule [regex|.*[0123456789].*& [^ ]+ |] $ \s -> do putStrLn s; yyAccept ()
             ]
+
     -- Output will be:
     -- *Main> main
     -- fgh1 
@@ -365,6 +368,7 @@ ParseTerm    = <a character>
             rule [regex|(a${}b)?|] $ \s -> do putStrLn s; yyAccept ()
             --or we could also use: rule (let x = [regex|(a${x}b)?|] in x) $ \s -> ...
         ]
+
     -- Output will be:
     -- *Main> main
     -- ab
@@ -390,6 +394,7 @@ ParseTerm    = <a character>
                  [regex|a(${bc'}|${abc bc'})|]
         -- To avoid left-recursion, we have used:
         -- abc | aabbcc | aaabbbccc | ... == a(bc | a(bbcc | a(bbbccc | a(...)))).
+
     -- *Main> main
     -- aaabbbccc
     ```
@@ -406,6 +411,7 @@ ParseTerm    = <a character>
             rule [regex|.{\s -> if s == "\n" then [""] else []}B|] $
                 \s -> do putStrLn s; yyAccept ()
         ]
+
     -- *Main> main
     -- B
     ```
@@ -420,6 +426,7 @@ ParseTerm    = <a character>
             rule [regex|.he{\s -> if s == "she" then ["SHE"] else []}|] $
                 \s -> do putStrLn s; yyAccept ()
         ]
+
     -- *Main> main
     -- SHE
     ```
@@ -445,6 +452,7 @@ main =
     $$ rules [
         rule [regex|abac|] $ \s -> do putStrLn s; yyAccept ()
     ]
+
 -- *Main> main
 -- abac
 ```
@@ -459,6 +467,7 @@ main =
         rule [regex|abc|] $ \s -> do putStrLn s; yyAccept (),
         rule [regex|abd|] $ \s -> do putStrLn s; yyAccept ()
     ]
+
 -- *Main> main
 -- abd
 ```
@@ -479,6 +488,7 @@ main =
         -- catch the last b
         rule [regex|b[^b]|] $ \s -> do putStrLn "End of b's"; yyAccept ()
     ]
+
 -- *Main> main
 -- Start of b's
 -- End of b's
@@ -513,6 +523,7 @@ main =
         rule [regex|she|] $ \s -> do putStrLn s; yyReject,
         rule [regex|he|]  $ \s -> do putStrLn s; yyAccept ()
     ]
+
 -- *Main> main
 -- she
 -- he
@@ -526,6 +537,7 @@ main =
         rule [regex|she|] $ \s -> do putStrLn s; yyAccept (),
         rule [regex|he|]  $ \s -> do putStrLn s; yyAccept ()
     ]
+
 -- *Main> main
 -- she
 ```
@@ -541,6 +553,7 @@ main =
     $$ rules [
         rule [regex|he|she|] $ \s -> do putStrLn s; yyAccept ()
     ]
+
 -- *Main> main
 -- he
 -- she
@@ -555,6 +568,7 @@ main =
     $$ rules [
         rule [regex|a*|] $ \s -> do putStrLn s; yyAccept ()
     ]
+
 -- *Main> main
 -- a
 -- a
@@ -582,6 +596,7 @@ main =
         rule [regex|ab|b|] $ \s -> if s == "b" then yyAccept s else yyReject,
         rule [regex|.b{\s -> [map toUpper s]}|] $ \s -> yyAccept s
     ]
+
 -- *Main> main
 -- b
 -- AB
