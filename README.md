@@ -313,23 +313,23 @@ analyzer =
     of `r` even before reaching the end of stream. The `Accept` is used to accept the 
     current match and report an `a` to `yyLex`, blocking next rules from having a chance 
     to match their patterns. However, the `Reject` passes the control over to the next 
-    rules to allow an possiblity to match their patterns (See about the details 
+    rules to allow possiblity to match their patterns (See the details 
     [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
     Note also that the each `action` function and `yacc` function run under the same 
     shared monad `m`, so that they can interact with each other through the same monad.
 
-    The following three short-cuts are provided in `Rtlex` to make it easy to use those 
-    `ActionResult`'s constructors:
-    ```haskell
-    yyReturn :: Monad m => r -> m (ActionResult r a)
-    yyReturn = return . Return
+- The following three short-cuts are provided in `Rtlex` to make it easy to use those 
+  `ActionResult`'s constructors:
+  ```haskell
+  yyReturn :: Monad m => r -> m (ActionResult r a)
+  yyReturn = return . Return
 
-    yyAccept :: Monad m => a -> m (ActionResult r a)
-    yyAccept = return . Accept
+  yyAccept :: Monad m => a -> m (ActionResult r a)
+  yyAccept = return . Accept
 
-    yyReject :: Monad m => m (ActionResult r a)
-    yyReject = return Reject
-    ```
+  yyReject :: Monad m => m (ActionResult r a)
+  yyReject = return Reject
+  ```
 
 ## Regular expressions
 
