@@ -60,16 +60,16 @@ way that:
 - It tries to match its patterns from top to bottom and one by one (or simultaneously if 
   it is "smart" enough),
 - If it finds a pattern to match a string up to some point as it reads from the input, it 
-  memorizes the pattern and the current point of the (ending-) match in the input, but it 
-  continues to try other patterns (and the currently matching pattern as well) for 
-  finding any possible longer matches as reading more characters from the input. If it 
-  finds a longer match it forgets about the previous pattern and its point of match that 
-  were memorized and instead it memorizes the new matching pattern and the new point of 
-  match in the input, and does this repeatedly.
+  memorizes the pattern and the current point of the (ending-) match in the input, but 
+  then it continues to try other patterns (and the currently matching pattern as well) 
+  for finding any possible longer matches as reading more characters from the input. If 
+  it can find a longer match it forgets about the previous pattern and its point of match 
+  that were memorized and instead it memorizes the new matching pattern and the new point 
+  of match in the input, and does this repeatedly.
 - If it finally finds no more patterns to match successfully as it reads from input, it 
   declares the match with the last pattern that has been memorized and also recovers the 
   input to the last point corresponding to the match, to continue the next lexical 
-  analysis with remaining input.
+  analysis with remaining input starting at the recovered point.
 
 For example, if a legacy lexical analyzer has the following two rules,
 ```
@@ -77,21 +77,45 @@ For example, if a legacy lexical analyzer has the following two rules,
 helloworld { printf("1st action\n"); }
 hello      { printf("2nd action\n"); }
 ```
-and if we give it the input, "helloworld", it will not execute either action until it 
-completely read the whole input string, and then it will execute only the first action. 
-At the moment it reads the first 'o' from "helloworld", it knows that the second pattern 
-does match, but it does not execute the second action immediately, because it wants to 
-try to match other patterns with more input characters as many as possible. And when it 
-finally knows the first pattern does match the whole input string, it then executes the 
-first action, ignoring the second action. What if we give it the input, "helloworks"? 
-This time, the second action will be executed as expected, but it will be executed only 
-when it reads the character 'k' from "helloworks", which is the first clue of no 
-successful matching with the first pattern. That means, depending on other patterns, the 
-action corresponding to a matched pattern may not be executed immediately.
+and if given the input, "helloworld", it will not execute either action until it 
+completely read the whole input string, and after reading to the end of the input it will 
+execute only the first action. In the middle of reading the input, at the moment it reads 
+the first 'o' from "helloworld", it knows that the second pattern does match, but it does 
+not execute the corresponding action immediately, because it wants to try to match other 
+pattern with as many input characters as possible. And when it finally finds the first 
+pattern does match the whole input string, it then executes the first action, ignoring 
+the second action. What if we give it the input, "helloworks"? This time, the second 
+action will be executed as expected, but it will be executed only when it reads the 
+character 'k' from "helloworks", which is the first clue of no successful match with the 
+first pattern. That means, even though a pattern matches, the correspoding action may not 
+be executed immediately, depending on other patterns.
 
-Note that most lexical analyzers (including the `flex`) are not so "smart" enough to match multiple patterns simultanenously, and when they get to know the first pattern does not match "helloworks" at the character 'k' they simply backtracks and try to match the second pattern back from the start of the input. (In fact, if they are to be "smart", they need to include actions into their associated regular expressions (regular expression ASTs, to be accurate) and then combine all those regular expressions across rules into a single regular expression, before starting to match them.)
+Let's add another rule to the above example to make:
+```
+%%
+helloworld { printf("1st action\n"); }
+hello      { printf("2nd action\n"); }
+works      { printf("3rd action\n"); }
+```
+Suppse we are working on the same input "helloworks". We expect the second and the third 
+action will be executed this time, and they do for sure. As with the previous example, 
+the second action is executed when the first pattern is found to no longer match at 
+reading 'k' from "helloworks". Then, how does the third pattern match with the remaining 
+input? The answer is backtracking. When the second action is executed, the input is 
+recovered to the point of matching with the second pattern "hello" and the input is 
+pushed back to become "works", which is then matched with the third pattern. And in this 
+matching of the third pattern with the recovered input, the characters are matched one by 
+one from the start, even though while matching with the first pattern, we could know that 
+the first three characters "wor" are actually matching the first three characters of the 
+third pattern. Those characters are simply matched again redundantly by having the input 
+backtracked. This is because multiple patterns are not considered simultaneously and only 
+one pattern is considered at a time, which is the way most legacy lexical analyzers 
+including `flex` do. (In fact, if they are to be "smart" enough, they need to embed 
+actions in the middle of their associated patterns (regular expressions) and combine all 
+those regular expressions across rules into a single regular expression, before start 
+matching with them.)
 
-So, to facilitate the analysis of real-time streams, rtlex features:
+So, to facilitate the lexical analysis with real-time stream, rtlex features:
 
 > - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
 > - simultaneous matching of all patterns, rather than trying patterns one by one. (By simultaneous, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and then another pattern is tried.)
