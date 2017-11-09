@@ -177,8 +177,8 @@ import qualified Data.Map as Map
 main :: IO ()
 main = do  -- in the IO monad
     m <- flip execStateT Map.empty $
-        -- execStateT returns the final state and discards the final value, which is () 
-        -- returned from stream ().
+	-- execStateT returns the final state but discards the final value, which is () 
+	-- returned from stream ().
 
         stream () "ha ha ho hoo hi ha"
 
