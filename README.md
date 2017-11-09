@@ -298,12 +298,12 @@ analyzer =
 
   Every `action` has type of `String -> m (ActionResult r a)`, where `ActionResult` type 
   is imported from `Rtlex` like:
-```haskell
+    ```haskell
     data ActionResult r a
         = Return r  -- to finish the lexical analyzer immediately with value "r"
 	| Accept a  -- to accept the current match and report value "a" to `yyLex`
 	| Reject    -- to reject the current match and continue to try other rules
-```
+    ```
 
     As we can see, there are two user-determined types involved, `r` and `a` that are 
     already introduced above. `a` is for reportng a value to `yyLex` and thus `yacc`, and 
