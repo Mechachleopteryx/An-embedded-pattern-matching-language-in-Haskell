@@ -97,28 +97,32 @@ helloworld { printf("1st action\n"); }
 hello      { printf("2nd action\n"); }
 works      { printf("3rd action\n"); }
 ```
-Suppse we are working on the same input "helloworks". We expect the second and the third 
-action will be executed this time, and they do for sure. As with the previous example, 
-the second action is executed when the first pattern is found to no longer match at 
-reading 'k' from "helloworks". Then, how does the third pattern match with the remaining 
-input? The answer is backtracking. When the second action is executed, the input is 
-recovered to the point of matching with the second pattern "hello" and the input is 
-pushed back to become "works", which is then matched with the third pattern. And in this 
-matching of the third pattern with the recovered input, the characters are matched one by 
-one from the start, even though while matching with the first pattern, we could know that 
-the first three characters "wor" are actually matching the first three characters of the 
-third pattern. Those characters are simply matched again redundantly by having the input 
-backtracked. This is because multiple patterns are not considered simultaneously and only 
-one pattern is considered at a time, which is the way most legacy lexical analyzers 
-including `flex` do. (In fact, if they are to be "smart" enough, they need to embed 
-actions in the middle of their associated patterns (regular expressions) and combine all 
-those regular expressions across rules into a single regular expression, before start 
-matching with them.)
+and suppse we are working on the same input "helloworks". We now expect the second and 
+the third action will be executed this time, and they do for sure. As with the previous 
+example, the second action is executed when the first pattern is found to no longer match 
+at reading 'k' from "helloworks". Then, how does the third pattern match with the 
+remaining input? The answer is backtracking. When the second action is executed, the 
+input is recovered to the point of matching with the second pattern "hello", and the 
+input is pushed back to become "works", which is then matched with the third pattern. And 
+in this matching of the third pattern with the recovered input, the characters are 
+matched one by one from the start, even though while matching with the first pattern 
+previously, we could know that the first three characters "wor" are actually matching the 
+first three characters of the third pattern. However, those characters are matched again 
+completely and redundantly by having the input backtracked. This is because multiple 
+patterns here are not considered simultaneously and only one pattern is considered at a 
+time, which is the way most legacy lexical analyzers including `flex` do. (In fact, if 
+they are to be "smart" enough, they need to embed actions in the middle of the associated 
+patterns (i.e., regular expressions) and combine all those regular expressions across 
+rules into a single regular expression, before start matching with them.)
 
 So, to facilitate the lexical analysis with real-time stream, rtlex features:
 
-> - immediate matching of patterns, rather than lazy matching to find out any possible longer matches, and
-> - simultaneous matching of all patterns, rather than trying patterns one by one. (By simultaneous, I do not mean that every pattern is matched through a separate thread, but that patterns are matched in such an interleaved way that there will be no backtracking when a pattern fails to match and then another pattern is tried.)
+> - immediate matching of patterns, rather than lazy matching to search for any possible longer matches, and
+> - simultaneous matching of all patterns, rather than matching patterns one at a time. 
+>   (By simultaneous, I do not mean that every pattern is matched through a separate 
+>   thread, but I mean that patterns are matched in such an interleaved way that there 
+>   will be no backtracking when a pattern fails to match and then another pattern is 
+>   tried.)
 
 ## An example
 
