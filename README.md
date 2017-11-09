@@ -316,7 +316,8 @@ analyzer =
     rules to allow an possiblity to match their patterns (See about the details 
     [below](https://github.com/dzchoi/Real-time-Lex/blob/master/README.md#details-about-matching-rules).) 
     Note also that the each `action` function and `yacc` function run under the same 
-    shared monad `m`, so that they can interact with each other through the same monad. 
+    shared monad `m`, so that they can interact with each other through the same monad.
+
     The following three short-cuts are provided in `Rtlex` to make it easy to use those 
     `ActionResult`'s constructors:
     ```haskell
